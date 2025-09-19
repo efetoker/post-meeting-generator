@@ -27,6 +27,7 @@ interface Connection {
 interface SocialConnectionsProps {
   connections: Connection[];
   handleDisconnect: (provider: string) => void;
+  defaultPageId: string | null;
 }
 
 interface FacebookPage {
@@ -38,8 +39,11 @@ interface FacebookPage {
 export function SocialConnections({
   connections,
   handleDisconnect,
+  defaultPageId,
 }: SocialConnectionsProps) {
   const [pages, setPages] = useState<FacebookPage[]>([]);
+  const [isLoadingPages, setIsLoadingPages] = useState(false);
+  const [pageSelectionMessage, setPageSelectionMessage] = useState("");
 
   const isLinkedInConnected = connections.some(
     (c) => c.provider === "linkedin"
@@ -50,27 +54,41 @@ export function SocialConnections({
 
   useEffect(() => {
     if (isFacebookConnected) {
+      setIsLoadingPages(true);
       const fetchPages = async () => {
-        const response = await fetch("/api/connections/facebook-pages");
-        const data = await response.json();
-        if (data && !data.error) setPages(data);
+        try {
+          const response = await fetch("/api/connections/facebook-pages");
+          const data = await response.json();
+          if (data && !data.error) setPages(data);
+        } catch (error) {
+          setPageSelectionMessage("Failed to load your pages.");
+        } finally {
+          setIsLoadingPages(false);
+        }
       };
       fetchPages();
     }
   }, [isFacebookConnected]);
 
   const handlePageSelect = async (pageId: string) => {
+    setPageSelectionMessage("Saving...");
     const selectedPage = pages.find((p) => p.id === pageId);
     if (!selectedPage) return;
 
-    await fetch("/api/settings/facebook-page", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        pageId: selectedPage.id,
-        pageAccessToken: selectedPage.access_token,
-      }),
-    });
+    try {
+      const response = await fetch("/api/settings/facebook-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pageId: selectedPage.id,
+          pageAccessToken: selectedPage.access_token,
+        }),
+      });
+      if (!response.ok) throw new Error();
+      setPageSelectionMessage("Success! Default page saved.");
+    } catch (error) {
+      setPageSelectionMessage("An error occurred.");
+    }
   };
 
   return (
@@ -121,23 +139,39 @@ export function SocialConnections({
             )}
           </div>
 
-          {isFacebookConnected && pages.length > 0 && (
-            <div className="pt-4">
+          {isFacebookConnected && (
+            <div className="pt-2 pl-2">
               <label className="text-sm font-medium block mb-2">
                 Default Page to Post To
               </label>
-              <Select onValueChange={handlePageSelect}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a page..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {pages.map((page) => (
-                    <SelectItem key={page.id} value={page.id}>
-                      {page.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isLoadingPages ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading pages...
+                </p>
+              ) : (
+                <>
+                  <Select
+                    onValueChange={handlePageSelect}
+                    defaultValue={defaultPageId || undefined}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a page..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pages.map((page) => (
+                        <SelectItem key={page.id} value={page.id}>
+                          {page.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {pageSelectionMessage && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {pageSelectionMessage}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
