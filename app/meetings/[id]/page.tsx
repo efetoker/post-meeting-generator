@@ -72,46 +72,54 @@ export default function MeetingDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 grid md:grid-cols-2 gap-8">
-      {/* Transcript Column */}
-      <div>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">{meeting.title}</h1>
-          <p className="text-muted-foreground">
-            {new Date(meeting.startTime).toLocaleString()}
-          </p>
+    <div className="container mx-auto max-w-4xl p-4 md:p-8">
+      {/* --- Main Meeting Info --- */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{meeting.title}</h1>
+        <p className="text-muted-foreground mt-1">
+          {new Date(meeting.startTime).toLocaleString()}
+        </p>
+      </div>
+
+      {/* --- AI Toolkit Section --- */}
+      <Card className="mb-8 bg-muted/20">
+        <CardHeader>
+          <CardTitle>AI Toolkit</CardTitle>
+          <CardDescription>
+            Generate content from this meeting's transcript.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={handleGenerateEmail} disabled={isGenerating}>
+            {isGenerating ? "Generating..." : "✨ Generate Follow-up Email"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* --- Generated Content Display --- */}
+      {generatedEmail && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Draft Follow-up Email</h2>
+          <Card>
+            <CardContent className="p-6">
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                {generatedEmail}
+              </pre>
+            </CardContent>
+          </Card>
         </div>
+      )}
+
+      {/* --- Transcript Section --- */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
         <Card>
-          <CardHeader>
-            <CardTitle>Meeting Transcript</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+          <CardContent className="p-6">
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
               {cleanTranscript}
             </pre>
           </CardContent>
         </Card>
-      </div>
-
-      {/* AI Content Column */}
-      <div>
-        <div className="space-y-4">
-          <Button onClick={handleGenerateEmail} disabled={isGenerating}>
-            {isGenerating ? "Generating..." : "Generate Follow-up Email"}
-          </Button>
-          {generatedEmail && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Draft Follow-up Email</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                  {generatedEmail}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
-        </div>
       </div>
     </div>
   );
