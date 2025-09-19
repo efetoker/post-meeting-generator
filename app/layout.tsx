@@ -32,7 +32,9 @@ export default function RootLayout({
             </div>
           </nav>
         </header>
-        <main>{children}</main>
+        <main>
+          <AuthProvider>{children}</AuthProvider>
+        </main>
       </body>
     </html>
   );
