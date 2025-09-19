@@ -3,9 +3,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Automation } from "@prisma/client";
-import { BotConfiguration } from "@/components/BotConfiguration";
-import { SocialConnections } from "@/components/SocialConnections";
-import { Automations } from "@/components/Automations";
+import { BotConfiguration } from "@/app/settings/components/BotConfiguration";
+import { SocialConnections } from "@/app/settings/components/SocialConnections";
+import { Automations } from "@/app/settings/components/Automations";
 
 interface Connection {
   provider: string;
