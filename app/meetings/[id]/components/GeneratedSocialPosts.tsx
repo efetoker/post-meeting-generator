@@ -104,11 +104,16 @@ export function GeneratedSocialPosts({
     setIsPosting(post.id);
     setPostStatus((prev) => ({ ...prev, [post.id]: "Posting..." }));
     try {
-      if (post.platform.toLowerCase() !== "linkedin") {
-        throw new Error("Only LinkedIn posting is currently supported.");
+      let endpoint = "";
+      if (post.platform.toLowerCase() === "linkedin") {
+        endpoint = "/api/post/linkedin";
+      } else if (post.platform.toLowerCase() === "facebook") {
+        endpoint = "/api/post/facebook";
+      } else {
+        throw new Error("Posting to this platform is not supported.");
       }
 
-      const response = await fetch("/api/post/linkedin", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: post.content, postId: post.id }),
