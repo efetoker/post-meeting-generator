@@ -44,6 +44,9 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+
+  botJoinOffsetMinutes Int @default(5)
+  
   accounts      Account[]
   sessions      Session[]
   meetings      Meeting[]
