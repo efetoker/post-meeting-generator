@@ -1,0 +1,15 @@
+# .github/workflows/poll-recall.yml
+
+name: Poll Recall.ai for Transcripts
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the polling endpoint
+        run: curl --request GET --url "${{ secrets.POLLING_URL }}" --fail
