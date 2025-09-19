@@ -30,9 +30,25 @@ export async function POST(request: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const prompt = `${automation.prompt}\n\nHere is the meeting transcript:\n---\n${transcript}`;
+    const finalPrompt = `
+      You are an AI assistant creating a social media post for a professional (e.g., a financial advisor).
+      Your task is to follow the user's instructions to generate a post based on a meeting transcript.
 
-    const result = await model.generateContent(prompt);
+      **User's Instructions:**
+      ---
+      ${automation.prompt}
+      ---
+      
+      **Meeting Transcript:**
+      ---
+      ${transcript}
+      ---
+
+      **Your Final Output MUST be ONLY the text of the social media post and nothing else.**
+      Do not include titles, options, explanations, or any text other than the post itself.
+    `;
+
+    const result = await model.generateContent(finalPrompt);
     const postContent = result.response.text();
 
     const newPost = await prisma.socialPost.create({
