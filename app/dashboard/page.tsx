@@ -32,7 +32,14 @@ export default function DashboardPage() {
           throw new Error("Failed to fetch calendar events.");
         }
         const data = await response.json();
-        setEvents(data);
+
+        const now = new Date();
+        const upcomingEvents = data.filter((event: EnrichedCalendarEvent) => {
+          const eventEndTime = new Date(event.end.dateTime || event.end.date!);
+          return eventEndTime > now;
+        });
+
+        setEvents(upcomingEvents);
       } catch (err: any) {
         setError(err.message);
       } finally {
