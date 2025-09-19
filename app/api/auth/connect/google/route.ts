@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   const params = new URLSearchParams({
-    client_id: process.env.GOOGLE_CONNECT_CLIENT_ID!,
+    client_id: process.env.GOOGLE_CLIENT_ID!,
     redirect_uri: `${process.env.AUTH_URL}/api/auth/callback/google-connect`,
     response_type: "code",
     scope:
