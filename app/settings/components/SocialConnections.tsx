@@ -28,6 +28,9 @@ export function SocialConnections({
   const isLinkedInConnected = connections.some(
     (c) => c.provider === "linkedin"
   );
+  const isFacebookConnected = connections.some(
+    (c) => c.provider === "facebook"
+  );
 
   return (
     <Card className="mb-8">
@@ -39,6 +42,7 @@ export function SocialConnections({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* LinkedIn Section */}
           <div className="flex items-center justify-between">
             <span>LinkedIn</span>
             {isLinkedInConnected ? (
@@ -54,6 +58,25 @@ export function SocialConnections({
               </div>
             ) : (
               <Button onClick={() => signIn("linkedin")}>Connect</Button>
+            )}
+          </div>
+
+          {/* Facebook Section */}
+          <div className="flex items-center justify-between">
+            <span>Facebook</span>
+            {isFacebookConnected ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-green-600">Connected</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDisconnect("facebook")}
+                >
+                  Disconnect
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={() => signIn("facebook")}>Connect</Button>
             )}
           </div>
         </div>
