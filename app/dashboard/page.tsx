@@ -12,14 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  start: { dateTime?: string; date?: string };
-  end: { dateTime?: string; date?: string };
-  attendees?: { email: string; responseStatus: string }[];
-}
+import { getMeetingInfo } from "@/lib/utils";
+import { CalendarEvent } from "@/types/calendar";
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -47,13 +41,16 @@ export default function DashboardPage() {
 
   const handleToggleChange = async (
     event: CalendarEvent,
-    isChecked: boolean
+    isChecked: boolean,
+    meetingInfo: { link: string; platform: string } | null
   ) => {
+    if (!meetingInfo) return;
+
     try {
       await fetch("/api/meetings/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event: event, isEnabled: isChecked }),
+        body: JSON.stringify({ event, isEnabled: isChecked, ...meetingInfo }),
       });
     } catch (error) {
       console.error("Failed to update toggle state:", error);
@@ -88,39 +85,55 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold mb-6">Upcoming Meetings</h1>
       <div className="space-y-4">
         {events.length > 0 ? (
-          events.map((event) => (
-            <Card key={event.id}>
-              <CardHeader>
-                <CardTitle>{event.summary || "No Title"}</CardTitle>
-                <CardDescription>
-                  {formatDateTime(event.start.dateTime, event.start.date)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold mb-2">Attendees:</h4>
-                  <ul className="list-disc list-inside text-sm text-gray-600">
-                    {event.attendees ? (
-                      event.attendees.map((attendee) => (
-                        <li key={attendee.email}>{attendee.email}</li>
-                      ))
-                    ) : (
-                      <li>Just you</li>
-                    )}
-                  </ul>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id={`record-${event.id}`}
-                    onCheckedChange={(isChecked) =>
-                      handleToggleChange(event, isChecked)
-                    }
-                  />
-                  <Label htmlFor={`record-${event.id}`}>Record meeting</Label>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+          events.map((event) => {
+            const meetingInfo = getMeetingInfo(event);
+            const isRecordable = !!meetingInfo;
+
+            return (
+              <Card
+                key={event.id}
+                className={!isRecordable ? "bg-muted/50" : ""}
+              >
+                <CardHeader>
+                  <CardTitle>{event.summary || "No Title"}</CardTitle>
+                  <CardDescription>
+                    {formatDateTime(event.start.dateTime, event.start.date)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold mb-2">Attendees:</h4>
+                    <ul className="list-disc list-inside text-sm text-gray-600">
+                      {event.attendees ? (
+                        event.attendees.map((attendee) => (
+                          <li key={attendee.email}>{attendee.email}</li>
+                        ))
+                      ) : (
+                        <li>Just you</li>
+                      )}
+                    </ul>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id={`record-${event.id}`}
+                      disabled={!isRecordable}
+                      onCheckedChange={(isChecked) =>
+                        handleToggleChange(event, isChecked, meetingInfo)
+                      }
+                    />
+                    <Label
+                      htmlFor={`record-${event.id}`}
+                      className={!isRecordable ? "text-gray-400" : ""}
+                    >
+                      {isRecordable
+                        ? "Record meeting"
+                        : "No meeting link found"}
+                    </Label>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
         ) : (
           <p>No upcoming meetings found.</p>
         )}
