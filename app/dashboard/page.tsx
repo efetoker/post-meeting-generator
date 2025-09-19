@@ -16,18 +16,9 @@ import { Label } from "@/components/ui/label";
 interface CalendarEvent {
   id: string;
   summary: string;
-  start: {
-    dateTime?: string;
-    date?: string;
-  };
-  end: {
-    dateTime?: string;
-    date?: string;
-  };
-  attendees?: {
-    email: string;
-    responseStatus: string;
-  }[];
+  start: { dateTime?: string; date?: string };
+  end: { dateTime?: string; date?: string };
+  attendees?: { email: string; responseStatus: string }[];
 }
 
 export default function DashboardPage() {
@@ -53,6 +44,21 @@ export default function DashboardPage() {
 
     fetchEvents();
   }, []);
+
+  const handleToggleChange = async (
+    event: CalendarEvent,
+    isChecked: boolean
+  ) => {
+    try {
+      await fetch("/api/meetings/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: event, isEnabled: isChecked }),
+      });
+    } catch (error) {
+      console.error("Failed to update toggle state:", error);
+    }
+  };
 
   const formatDateTime = (dateTime?: string, date?: string) => {
     if (dateTime) {
@@ -104,7 +110,12 @@ export default function DashboardPage() {
                   </ul>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Switch id={`record-${event.id}`} />
+                  <Switch
+                    id={`record-${event.id}`}
+                    onCheckedChange={(isChecked) =>
+                      handleToggleChange(event, isChecked)
+                    }
+                  />
                   <Label htmlFor={`record-${event.id}`}>Record meeting</Label>
                 </div>
               </CardContent>
