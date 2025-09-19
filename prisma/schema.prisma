@@ -79,6 +79,7 @@ model Meeting {
   recallBotId     String?
   transcript      String? @db.Text
   followUpEmail   String? @db.Text
+  socialPosts     SocialPost[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -96,6 +97,17 @@ model Automation {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model SocialPost {
+  id        String @id @default(cuid())
+  platform  String // e.g., "LinkedIn", "Facebook"
+  content   String @db.Text
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model CronLog {
