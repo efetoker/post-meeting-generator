@@ -46,14 +46,31 @@ export default function DashboardPage() {
   ) => {
     if (!meetingInfo) return;
 
-    try {
-      await fetch("/api/meetings/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event, isEnabled: isChecked, ...meetingInfo }),
-      });
-    } catch (error) {
-      console.error("Failed to update toggle state:", error);
+    if (isChecked) {
+      if (!meetingInfo) return;
+      try {
+        await fetch("/api/meetings/toggle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event, isEnabled: true, ...meetingInfo }),
+        });
+        // TODO: Add success feedback to the user
+      } catch (error) {
+        console.error("Failed to enable recording:", error);
+        // TODO: Add error feedback to the user
+      }
+    } else {
+      try {
+        await fetch("/api/meetings/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ googleEventId: event.id }),
+        });
+        // TODO: Add success feedback to the user
+      } catch (error) {
+        console.error("Failed to cancel recording:", error);
+        // TODO: Add error feedback to the user
+      }
     }
   };
 
