@@ -67,6 +67,8 @@ model Meeting {
   meetingLink     String
   platform        String // "zoom", "google_meet", etc.
 
+  recordingEnabled Boolean @default(false)
+
   status          String @default("SCHEDULED") // e.g., SCHEDULED, PROCESSING, COMPLETED, FAILED
 
   recallBotId     String?
