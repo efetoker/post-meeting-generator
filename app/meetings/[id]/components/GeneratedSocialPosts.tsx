@@ -48,13 +48,29 @@ export function GeneratedSocialPosts({
   const [postStatus, setPostStatus] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
-    const fetchAutomations = async () => {
-      const response = await fetch("/api/automations");
-      const data = await response.json();
-      setAutomations(data);
+    const fetchInitialData = async () => {
+      try {
+        const [automationsRes, postsRes] = await Promise.all([
+          fetch("/api/automations"),
+          fetch(`/api/meetings/${meetingId}/posts`),
+        ]);
+
+        const automationsData = await automationsRes.json();
+        setAutomations(automationsData);
+
+        if (postsRes.ok) {
+          const postsData = await postsRes.json();
+          setGeneratedPosts(postsData);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load initial data for social posts component",
+          error
+        );
+      }
     };
-    fetchAutomations();
-  }, []);
+    fetchInitialData();
+  }, [meetingId]);
 
   const handleGeneratePost = async () => {
     if (!selectedAutomationId) return;
@@ -84,32 +100,47 @@ export function GeneratedSocialPosts({
     navigator.clipboard.writeText(text);
   };
 
-  const handlePost = async (
-    postId: string,
-    content: string,
-    platform: string
-  ) => {
-    setIsPosting(postId);
-    setPostStatus((prev) => ({ ...prev, [postId]: "Posting..." }));
+  const handlePost = async (post: SocialPost) => {
+    setIsPosting(post.id);
+    setPostStatus((prev) => ({ ...prev, [post.id]: "Posting..." }));
     try {
-      if (platform.toLowerCase() !== "linkedin") {
+      if (post.platform.toLowerCase() !== "linkedin") {
         throw new Error("Only LinkedIn posting is currently supported.");
       }
 
       const response = await fetch("/api/post/linkedin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: post.content, postId: post.id }),
       });
 
-      if (!response.ok) throw new Error("Failed to post.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to post.");
+      }
 
-      setPostStatus((prev) => ({ ...prev, [postId]: "Posted successfully!" }));
+      setPostStatus((prev) => ({ ...prev, [post.id]: "Posted successfully!" }));
+      setGeneratedPosts((prevPosts) =>
+        prevPosts.map((p) =>
+          p.id === post.id ? { ...p, status: "PUBLISHED" } : p
+        )
+      );
     } catch (error: any) {
-      setPostStatus((prev) => ({ ...prev, [postId]: error.message }));
+      setPostStatus((prev) => ({ ...prev, [post.id]: error.message }));
       console.error("Failed to post:", error);
     } finally {
       setIsPosting(null);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    try {
+      await fetch(`/api/post/${postId}`, {
+        method: "DELETE",
+      });
+      setGeneratedPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (error) {
+      console.error("Failed to delete post:", error);
     }
   };
 
@@ -152,7 +183,8 @@ export function GeneratedSocialPosts({
         {generatedPosts.map((post) => (
           <div key={post.id}>
             <h2 className="text-2xl font-bold mb-4">
-              Draft {post.platform} Post
+              {post.status === "DRAFT" ? "Draft" : "Published"} {post.platform}{" "}
+              Post
             </h2>
             <Card>
               <CardContent className="p-6">
@@ -162,22 +194,33 @@ export function GeneratedSocialPosts({
               </CardContent>
               <CardFooter className="flex justify-between items-center">
                 <div className="flex gap-2">
+                  {post.status === "DRAFT" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(post.id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     onClick={() => handleCopy(post.content)}
                   >
                     Copy
                   </Button>
-                  <Button
-                    onClick={() =>
-                      handlePost(post.id, post.content, post.platform)
-                    }
-                    disabled={isPosting === post.id}
-                  >
-                    {isPosting === post.id
-                      ? "Posting..."
-                      : `Post to ${post.platform}`}
-                  </Button>
+                  {post.status === "DRAFT" && (
+                    <Button
+                      onClick={() => handlePost(post)}
+                      disabled={isPosting === post.id}
+                    >
+                      {isPosting === post.id
+                        ? "Posting..."
+                        : `Post to ${post.platform}`}
+                    </Button>
+                  )}
                 </div>
                 {postStatus[post.id] && (
                   <p className="text-sm text-muted-foreground">
