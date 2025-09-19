@@ -27,6 +27,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
       wellKnown:
         "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+      authorization: {
+        params: {
+          scope: "w_member_social openid profile email",
+        },
+      },
       profile(profile) {
         return {
           id: profile.sub,
