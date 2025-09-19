@@ -103,6 +103,7 @@ model SocialPost {
   id        String @id @default(cuid())
   platform  String // e.g., "LinkedIn", "Facebook"
   content   String @db.Text
+  status    String @default("DRAFT") // DRAFT or PUBLISHED
 
   meetingId String
   meeting   Meeting @relation(fields: [meetingId], references: [id])
