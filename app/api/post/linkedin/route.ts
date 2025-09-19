@@ -12,7 +12,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { content } = await request.json();
+    const { content, postId } = await request.json();
+
     if (!content) {
       return NextResponse.json(
         { error: "Content is required." },
@@ -66,6 +67,11 @@ export async function POST(request: Request) {
       console.error("LinkedIn API Error:", errorBody);
       throw new Error("Failed to post to LinkedIn.");
     }
+
+    await prisma.socialPost.update({
+      where: { id: postId },
+      data: { status: "PUBLISHED" },
+    });
 
     return NextResponse.json({
       success: true,
