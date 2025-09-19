@@ -14,6 +14,8 @@ export async function POST(request: Request) {
   try {
     const { event, isEnabled, link, platform } = await request.json();
 
+    const attendees = event.attendees || [];
+
     let botId = null;
 
     if (isEnabled && link) {
@@ -80,6 +82,7 @@ export async function POST(request: Request) {
         meetingLink: link,
         platform: platform,
         recallBotId: botId,
+        attendees: attendees,
       },
     });
 
