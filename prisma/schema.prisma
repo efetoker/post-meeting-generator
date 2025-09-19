@@ -46,6 +46,8 @@ model User {
   image         String?
 
   botJoinOffsetMinutes Int @default(5)
+  defaultFacebookPageId    String?
+  facebookPageAccessToken String? @db.Text
 
   accounts      Account[]
   sessions      Session[]
