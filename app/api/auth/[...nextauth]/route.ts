@@ -3,6 +3,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin";
+import FacebookProvider from "next-auth/providers/facebook";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
@@ -39,6 +40,15 @@ export const authOptions: NextAuthOptions = {
           email: profile.email,
           image: profile.picture,
         };
+      },
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "email public_profile pages_show_list pages_manage_posts",
+        },
       },
     }),
   ],
