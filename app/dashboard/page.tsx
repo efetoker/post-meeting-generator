@@ -15,15 +15,19 @@ import { Label } from "@/components/ui/label";
 import { getMeetingInfo } from "@/lib/utils";
 import { CalendarEvent } from "@/types/calendar";
 
+interface EnrichedCalendarEvent extends CalendarEvent {
+  isRecordingEnabled: boolean;
+}
+
 export default function DashboardPage() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<EnrichedCalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch("/api/calendar");
+        const response = await fetch("/api/dashboard-events");
         if (!response.ok) {
           throw new Error("Failed to fetch calendar events.");
         }
@@ -134,6 +138,7 @@ export default function DashboardPage() {
                     <Switch
                       id={`record-${event.id}`}
                       disabled={!isRecordable}
+                      defaultChecked={event.isRecordingEnabled}
                       onCheckedChange={(isChecked) =>
                         handleToggleChange(event, isChecked, meetingInfo)
                       }
