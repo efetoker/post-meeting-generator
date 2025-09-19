@@ -31,24 +31,28 @@ export async function GET(request: Request) {
     if (tokens.error) throw new Error(tokens.error_description);
 
     const profileResponse = await fetch(
-      "https://www.googleapis.com/oauth2/v3/userinfo",
+      "https://www.googleapis.com/oauth2/v2/userinfo",
       {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       }
     );
+
     const profile = await profileResponse.json();
+    if (!profile.id)
+      throw new Error("Failed to retrieve user profile from Google.");
 
     await prisma.account.create({
       data: {
         userId: userId,
         type: "oauth",
         provider: "google",
-        providerAccountId: profile.sub,
+        providerAccountId: profile.id,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         expires_at: Math.floor(Date.now() / 1000) + tokens.expires_in,
         token_type: tokens.token_type,
         scope: tokens.scope,
+        email: profile.email,
       },
     });
   } catch (error) {
