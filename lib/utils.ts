@@ -35,3 +35,36 @@ export function getMeetingInfo(
 
   return { link, platform };
 }
+
+interface TranscriptWord {
+  text: string;
+}
+
+interface TranscriptEntry {
+  participant: {
+    name: string;
+  };
+  words: TranscriptWord[];
+}
+
+export function formatTranscript(transcriptJson: string | null): string {
+  if (!transcriptJson) {
+    return "No transcript available.";
+  }
+
+  try {
+    const transcriptData: TranscriptEntry[] = JSON.parse(transcriptJson);
+
+    let fullTranscript = "";
+    transcriptData.forEach((entry) => {
+      const speaker = entry.participant.name || "Unknown Speaker";
+      const dialogue = entry.words.map((word) => word.text).join(" ");
+      fullTranscript += `${speaker}: ${dialogue}\n\n`;
+    });
+
+    return fullTranscript.trim();
+  } catch (error) {
+    console.error("Failed to parse transcript JSON:", error);
+    return "Error displaying transcript.";
+  }
+}
