@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Account } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 interface GoogleConnectionsProps {
   connections: Account[];
@@ -21,7 +22,12 @@ export function GoogleConnections({
   connections,
   handleDisconnect,
 }: GoogleConnectionsProps) {
+  const { data: session } = useSession();
   const googleAccounts = connections.filter((c) => c.provider === "google");
+
+  const additionalAccounts = googleAccounts.filter(
+    (acc) => acc.email !== session?.user?.email
+  );
 
   return (
     <Card className="mb-8">
@@ -32,13 +38,14 @@ export function GoogleConnections({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {googleAccounts.map((account) => (
+        {additionalAccounts.map((account) => (
           <div
             key={account.providerAccountId}
             className="flex items-center justify-between p-2 border rounded-md"
           >
             <span className="text-sm">
-              Account ID: ...{account.providerAccountId?.slice(-6) || "N/A"}
+              {account.email ||
+                `Account ID: ...${account.providerAccountId?.slice(-6)}`}
             </span>
             <Button
               variant="outline"
