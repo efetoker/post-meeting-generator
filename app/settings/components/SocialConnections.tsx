@@ -10,7 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 interface Connection {
   provider: string;
@@ -21,16 +29,49 @@ interface SocialConnectionsProps {
   handleDisconnect: (provider: string) => void;
 }
 
+interface FacebookPage {
+  id: string;
+  name: string;
+  access_token: string;
+}
+
 export function SocialConnections({
   connections,
   handleDisconnect,
 }: SocialConnectionsProps) {
+  const [pages, setPages] = useState<FacebookPage[]>([]);
+
   const isLinkedInConnected = connections.some(
     (c) => c.provider === "linkedin"
   );
   const isFacebookConnected = connections.some(
     (c) => c.provider === "facebook"
   );
+
+  useEffect(() => {
+    if (isFacebookConnected) {
+      const fetchPages = async () => {
+        const response = await fetch("/api/connections/facebook-pages");
+        const data = await response.json();
+        if (data && !data.error) setPages(data);
+      };
+      fetchPages();
+    }
+  }, [isFacebookConnected]);
+
+  const handlePageSelect = async (pageId: string) => {
+    const selectedPage = pages.find((p) => p.id === pageId);
+    if (!selectedPage) return;
+
+    await fetch("/api/settings/facebook-page", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pageId: selectedPage.id,
+        pageAccessToken: selectedPage.access_token,
+      }),
+    });
+  };
 
   return (
     <Card className="mb-8">
@@ -79,6 +120,26 @@ export function SocialConnections({
               <Button onClick={() => signIn("facebook")}>Connect</Button>
             )}
           </div>
+
+          {isFacebookConnected && pages.length > 0 && (
+            <div className="pt-4">
+              <label className="text-sm font-medium block mb-2">
+                Default Page to Post To
+              </label>
+              <Select onValueChange={handlePageSelect}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a page..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {pages.map((page) => (
+                    <SelectItem key={page.id} value={page.id}>
+                      {page.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
