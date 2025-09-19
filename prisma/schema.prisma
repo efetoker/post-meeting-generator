@@ -70,6 +70,7 @@ model Meeting {
   meetingLink     String
   platform        String // "zoom", "google_meet", etc.
 
+  attendees        Json?
   recordingEnabled Boolean @default(false)
 
   status          String @default("SCHEDULED") // e.g., SCHEDULED, PROCESSING, COMPLETED, FAILED
