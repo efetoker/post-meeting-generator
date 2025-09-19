@@ -19,12 +19,16 @@ export async function POST(request: Request) {
     let botId = null;
 
     if (isEnabled && link) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { botJoinOffsetMinutes: true },
+      });
+
+      const joinBeforeMinutes = user?.botJoinOffsetMinutes ?? 5;
+
       const meetingStartTime = new Date(
         event.start.dateTime || event.start.date
       );
-
-      // TODO: Get this value from user settings in the database.
-      const joinBeforeMinutes = 5;
 
       const joinAtTime = new Date(
         meetingStartTime.getTime() - joinBeforeMinutes * 60 * 1000
