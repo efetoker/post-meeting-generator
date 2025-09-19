@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Token ${process.env.RECALL_AI_KEY}`,
+            Authorization: `Token ${process.env.RECALL_API_KEY}`,
           },
         }
       );
