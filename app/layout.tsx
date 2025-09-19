@@ -28,6 +28,7 @@ export default function RootLayout({
             </Link>
             <div className="space-x-4">
               <Link href="/dashboard">Dashboard</Link>
+              <Link href="/meetings">Past Meetings</Link>
               <Link href="/settings">Settings</Link>
             </div>
           </nav>

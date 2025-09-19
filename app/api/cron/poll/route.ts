@@ -21,7 +21,7 @@ export async function GET() {
       where: {
         recordingEnabled: true,
         recallBotId: { not: null },
-        status: "SCHEDULED",
+        status: { in: ["SCHEDULED", "TRANSCRIBING"] },
         startTime: { lt: new Date() },
       },
     });
@@ -39,33 +39,66 @@ export async function GET() {
 
       console.log(`Polling status for bot: ${meeting.recallBotId}`);
 
-      const response = await fetch(
+      const botStatusResponse = await fetch(
         `https://us-west-2.recall.ai/api/v1/bot/${meeting.recallBotId}`,
         {
-          headers: {
-            Authorization: `Token ${process.env.RECALL_API_KEY}`,
-          },
+          headers: { Authorization: `Token ${process.env.RECALL_API_KEY}` },
         }
       );
 
-      if (!response.ok) {
+      if (!botStatusResponse.ok) {
         console.error(`Failed to get status for bot ${meeting.recallBotId}`);
         continue;
       }
 
-      const botData = await response.json();
+      const botData = await botStatusResponse.json();
 
-      if (botData.transcript?.status === "done") {
+      if (
+        meeting.status === "SCHEDULED" &&
+        botData.recordings?.length > 0 &&
+        botData.recordings[0].status?.code === "done"
+      ) {
         console.log(
-          `Transcript ready for bot: ${botData.id}. Updating database.`
+          `Recording found for bot ${botData.id}. Starting transcription job.`
         );
 
-        const transcriptText = JSON.stringify(botData.transcript.text);
+        const recordingId = botData.recordings[0].id;
+
+        await fetch(
+          `https://us-west-2.recall.ai/api/v1/recording/${recordingId}/create_transcript/`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Token ${process.env.RECALL_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              provider: { recallai_async: { language: "en" } },
+            }),
+          }
+        );
+
+        await prisma.meeting.update({
+          where: { id: meeting.id },
+          data: { status: "TRANSCRIBING" },
+        });
+      }
+
+      const transcriptInfo =
+        botData.recordings?.[0]?.media_shortcuts?.transcript;
+      if (transcriptInfo?.status?.code === "done") {
+        console.log(
+          `Transcript ready for bot: ${botData.id}. Downloading and updating database.`
+        );
+
+        const transcriptDownloadUrl = transcriptInfo.data.download_url;
+        const transcriptResponse = await fetch(transcriptDownloadUrl);
+        const transcriptData = await transcriptResponse.json();
 
         await prisma.meeting.update({
           where: { id: meeting.id },
           data: {
-            transcript: transcriptText,
+            transcript: JSON.stringify(transcriptData),
             status: "COMPLETED",
           },
         });
