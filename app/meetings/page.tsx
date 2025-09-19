@@ -85,15 +85,20 @@ export default function PastMeetingsPage() {
                 <CardContent className="pt-4">
                   <h4 className="text-sm font-semibold mb-2">Attendees:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(meeting.attendees as unknown as Attendee[])?.map(
-                      (attendee) => (
+                    {meeting.attendees &&
+                    (meeting.attendees as unknown as Attendee[]).length > 0 ? (
+                      (meeting.attendees as unknown as Attendee[]).map((attendee) => (
                         <div
                           key={attendee.email}
                           className="text-xs bg-secondary text-secondary-foreground rounded-full px-2 py-1"
                         >
                           {attendee.email}
                         </div>
-                      )
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        No attendees listed.
+                      </p>
                     )}
                   </div>
                 </CardContent>
