@@ -46,10 +46,11 @@ model User {
   image         String?
 
   botJoinOffsetMinutes Int @default(5)
-  
+
   accounts      Account[]
   sessions      Session[]
   meetings      Meeting[]
+  automations   Automation[]
 }
 
 model VerificationToken {
@@ -81,6 +82,20 @@ model Meeting {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Automation {
+  id          String @id @default(cuid())
+  name        String
+  platform    String // e.g., "linkedin", "facebook"
+  prompt      String @db.Text
+  example     String? @db.Text
+
+  userId      String
+  user        User   @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model CronLog {
