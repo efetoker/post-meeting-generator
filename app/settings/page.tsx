@@ -17,7 +17,6 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
-  const [defaultPageId, setDefaultPageId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadPageData = async () => {
@@ -34,7 +33,6 @@ export default function SettingsPage() {
         if (!settingsRes.ok) throw new Error("Could not load settings.");
         const settingsData = await settingsRes.json();
         setOffset(settingsData.botJoinOffsetMinutes.toString());
-        setDefaultPageId(settingsData.defaultFacebookPageId);
 
         if (!connectionsRes.ok) throw new Error("Could not load connections.");
         const connectionsData = await connectionsRes.json();
@@ -124,7 +122,6 @@ export default function SettingsPage() {
       <SocialConnections
         connections={connections}
         handleDisconnect={handleDisconnect}
-        defaultPageId={defaultPageId}
       />
 
       <Automations
