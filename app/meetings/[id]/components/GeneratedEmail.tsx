@@ -35,7 +35,7 @@ export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
   };
 
   return (
-    <>
+    <div>
       <Button onClick={handleGenerateEmail} disabled={isGenerating}>
         {isGenerating ? "Generating..." : "✨ Generate Follow-up Email"}
       </Button>
@@ -52,6 +52,6 @@ export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
           </Card>
         </div>
       )}
-    </>
+    </div>
   );
 }
