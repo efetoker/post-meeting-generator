@@ -16,12 +16,58 @@ export async function POST(request: Request) {
   try {
     const { event, isEnabled, link, platform } = await request.json();
 
+    let botId = null;
+
+    if (isEnabled && link) {
+      const meetingStartTime = new Date(
+        event.start.dateTime || event.start.date
+      );
+
+      // TODO: Get this value from user settings in the database.
+      const joinBeforeMinutes = 5;
+
+      const joinAtTime = new Date(
+        meetingStartTime.getTime() - joinBeforeMinutes * 60 * 1000
+      );
+
+      const scheduleResponse = await fetch(
+        "https://us-west-2.recall.ai/api/v1/bot",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Token ${process.env.RECALL_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            meeting_url: link,
+            join_at: joinAtTime.toISOString(),
+            // For now, the bot joins immediately. We will make this configurable later.
+            // We could also add a transcription_options object here if needed.
+          }),
+        }
+      );
+
+      if (!scheduleResponse.ok) {
+        console.error(
+          "Failed to schedule Recall.ai bot:",
+          scheduleResponse.statusText
+        );
+        const errorBody = await scheduleResponse.json();
+        console.error("Recall.ai API Error:", errorBody);
+        throw new Error("Failed to schedule Recall.ai bot.");
+      }
+
+      const botData = await scheduleResponse.json();
+      botId = botData.id;
+    }
+
     await prisma.meeting.upsert({
       where: { googleEventId: event.id },
       update: {
         recordingEnabled: isEnabled,
         meetingLink: link,
         platform: platform,
+        recallBotId: botId,
       },
       create: {
         googleEventId: event.id,
@@ -31,6 +77,7 @@ export async function POST(request: Request) {
         userId: session.user.id,
         meetingLink: link,
         platform: platform,
+        recallBotId: botId,
       },
     });
 
