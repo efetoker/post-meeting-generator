@@ -12,10 +12,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { content } = await request.json();
+    const { content, postId } = await request.json();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
+
+    if (!content || !postId) {
+      return NextResponse.json(
+        { error: "Content and postId are required." },
+        { status: 400 }
+      );
+    }
 
     if (!user?.defaultFacebookPageId || !user.facebookPageAccessToken) {
       return NextResponse.json(
@@ -36,6 +43,11 @@ export async function POST(request: Request) {
 
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
+
+    await prisma.socialPost.update({
+      where: { id: postId },
+      data: { status: "PUBLISHED" },
+    });
 
     return NextResponse.json({
       success: true,
