@@ -2,20 +2,25 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Automation } from "@prisma/client";
+import { Account, Automation } from "@prisma/client";
 import { BotConfiguration } from "@/app/settings/components/BotConfiguration";
 import { SocialConnections } from "@/app/settings/components/SocialConnections";
 import { Automations } from "@/app/settings/components/Automations";
-
-interface Connection {
-  provider: string;
-}
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { GoogleConnections } from "./components/GoogleConnections";
 
 export default function SettingsPage() {
   const [offset, setOffset] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [connections, setConnections] = useState<Connection[]>([]);
+  const [connections, setConnections] = useState<Account[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
 
   useEffect(() => {
@@ -111,6 +116,11 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
+
+      <GoogleConnections
+        connections={connections}
+        handleDisconnect={handleDisconnect}
+      />
 
       <BotConfiguration
         offset={offset}
