@@ -16,9 +16,6 @@ export async function GET() {
       where: {
         userId: session.user.id,
       },
-      select: {
-        provider: true,
-      },
     });
 
     return NextResponse.json(connections);
