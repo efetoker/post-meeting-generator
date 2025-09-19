@@ -66,8 +66,9 @@ export default function MeetingDetailPage() {
             Generate content from this meeting's transcript.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <GeneratedEmail transcript={cleanTranscript} />
+          <GeneratedSocialPosts meetingId={id} transcript={cleanTranscript} />
         </CardContent>
       </Card>
 
