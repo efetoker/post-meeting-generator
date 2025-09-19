@@ -44,6 +44,8 @@ export function GeneratedSocialPosts({
   const [generatedPosts, setGeneratedPosts] = useState<SocialPost[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPosting, setIsPosting] = useState<string | null>(null);
+  const [postStatus, setPostStatus] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchAutomations = async () => {
@@ -80,6 +82,35 @@ export function GeneratedSocialPosts({
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handlePost = async (
+    postId: string,
+    content: string,
+    platform: string
+  ) => {
+    setIsPosting(postId);
+    setPostStatus((prev) => ({ ...prev, [postId]: "Posting..." }));
+    try {
+      if (platform.toLowerCase() !== "linkedin") {
+        throw new Error("Only LinkedIn posting is currently supported.");
+      }
+
+      const response = await fetch("/api/post/linkedin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) throw new Error("Failed to post.");
+
+      setPostStatus((prev) => ({ ...prev, [postId]: "Posted successfully!" }));
+    } catch (error: any) {
+      setPostStatus((prev) => ({ ...prev, [postId]: error.message }));
+      console.error("Failed to post:", error);
+    } finally {
+      setIsPosting(null);
+    }
   };
 
   return (
@@ -129,14 +160,30 @@ export function GeneratedSocialPosts({
                   {post.content}
                 </pre>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => handleCopy(post.content)}
-                >
-                  Copy
-                </Button>
-                <Button>Post to {post.platform}</Button>
+              <CardFooter className="flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleCopy(post.content)}
+                  >
+                    Copy
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      handlePost(post.id, post.content, post.platform)
+                    }
+                    disabled={isPosting === post.id}
+                  >
+                    {isPosting === post.id
+                      ? "Posting..."
+                      : `Post to ${post.platform}`}
+                  </Button>
+                </div>
+                {postStatus[post.id] && (
+                  <p className="text-sm text-muted-foreground">
+                    {postStatus[post.id]}
+                  </p>
+                )}
               </CardFooter>
             </Card>
           </div>
