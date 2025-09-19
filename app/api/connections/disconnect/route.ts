@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { provider } = await request.json();
+    const { provider, providerAccountId } = await request.json();
 
     if (!provider) {
       return NextResponse.json(
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       where: {
         userId: session.user.id,
         provider: provider,
+        providerAccountId: providerAccountId,
       },
     });
 
