@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Icon } from "@iconify/react";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -27,7 +28,6 @@ interface Connection {
 interface SocialConnectionsProps {
   connections: Connection[];
   handleDisconnect: (provider: string) => void;
-  defaultPageId: string | null;
 }
 
 interface FacebookPage {
@@ -39,11 +39,11 @@ interface FacebookPage {
 export function SocialConnections({
   connections,
   handleDisconnect,
-  defaultPageId,
 }: SocialConnectionsProps) {
   const [pages, setPages] = useState<FacebookPage[]>([]);
   const [isLoadingPages, setIsLoadingPages] = useState(false);
   const [pageSelectionMessage, setPageSelectionMessage] = useState("");
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
   const isLinkedInConnected = connections.some(
     (c) => c.provider === "linkedin"
@@ -55,39 +55,60 @@ export function SocialConnections({
   useEffect(() => {
     if (isFacebookConnected) {
       setIsLoadingPages(true);
-      const fetchPages = async () => {
+      const fetchInitialData = async () => {
         try {
-          const response = await fetch("/api/connections/facebook-pages");
-          const data = await response.json();
-          if (data && !data.error) setPages(data);
+          const [pagesRes, settingsRes] = await Promise.all([
+            fetch("/api/connections/facebook-pages"),
+            fetch("/api/settings"),
+          ]);
+
+          const pagesData = await pagesRes.json();
+          if (pagesData && !pagesData.error) setPages(pagesData);
+
+          const settingsData = await settingsRes.json();
+          if (settingsData && settingsData.defaultFacebookPageId) {
+            setSelectedPageId(settingsData.defaultFacebookPageId);
+          }
         } catch (error) {
           setPageSelectionMessage("Failed to load your pages.");
         } finally {
           setIsLoadingPages(false);
         }
       };
-      fetchPages();
+      fetchInitialData();
     }
   }, [isFacebookConnected]);
 
-  const handlePageSelect = async (pageId: string) => {
+  const savePageSelection = async (
+    pageId: string | null,
+    pageAccessToken: string | null
+  ) => {
     setPageSelectionMessage("Saving...");
-    const selectedPage = pages.find((p) => p.id === pageId);
-    if (!selectedPage) return;
-
     try {
       const response = await fetch("/api/settings/facebook-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pageId: selectedPage.id,
-          pageAccessToken: selectedPage.access_token,
-        }),
+        body: JSON.stringify({ pageId, pageAccessToken }),
       });
-      if (!response.ok) throw new Error();
-      setPageSelectionMessage("Success! Default page saved.");
+      if (!response.ok) throw new Error("Save failed");
+
+      setSelectedPageId(pageId);
+      setPageSelectionMessage(
+        pageId ? "Default page saved." : "Default page cleared."
+      );
     } catch (error) {
       setPageSelectionMessage("An error occurred.");
+    }
+  };
+
+  const handleClearSelection = () => {
+    savePageSelection(null, null);
+  };
+
+  const handlePageSelect = (pageId: string) => {
+    const selectedPage = pages.find((p) => p.id === pageId);
+    if (selectedPage) {
+      savePageSelection(selectedPage.id, selectedPage.access_token);
     }
   };
 
@@ -150,21 +171,32 @@ export function SocialConnections({
                 </p>
               ) : (
                 <>
-                  <Select
-                    onValueChange={handlePageSelect}
-                    defaultValue={defaultPageId || undefined}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a page..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pages.map((page) => (
-                        <SelectItem key={page.id} value={page.id}>
-                          {page.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      onValueChange={handlePageSelect}
+                      value={selectedPageId || ""}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a page..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pages.map((page) => (
+                          <SelectItem key={page.id} value={page.id}>
+                            {page.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedPageId && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleClearSelection}
+                      >
+                        <Icon icon="lucide:x" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                   {pageSelectionMessage && (
                     <p className="text-sm text-muted-foreground mt-2">
                       {pageSelectionMessage}
