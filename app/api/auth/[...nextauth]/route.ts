@@ -2,6 +2,7 @@
 
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import LinkedInProvider from "next-auth/providers/linkedin";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
@@ -19,6 +20,20 @@ export const authOptions: NextAuthOptions = {
           scope:
             "openid email profile https://www.googleapis.com/auth/calendar.readonly",
         },
+      },
+    }),
+    LinkedInProvider({
+      clientId: process.env.LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+      wellKnown:
+        "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
       },
     }),
   ],
