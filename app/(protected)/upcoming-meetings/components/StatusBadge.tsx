@@ -9,6 +9,12 @@ const statusMap = {
     icon: "lucide:clock",
     color: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300",
   },
+  PROCESSING: {
+    text: "Processing",
+    icon: "lucide:loader-circle",
+    color:
+      "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300",
+  },
   TRANSCRIBING: {
     text: "Processing",
     icon: "lucide:loader-circle",
