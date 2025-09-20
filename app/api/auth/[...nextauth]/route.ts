@@ -13,6 +13,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           prompt: "consent",
@@ -56,6 +57,23 @@ export const authOptions: NextAuthOptions = {
     async session({ session, user }) {
       session.user.id = user.id;
       return session;
+    },
+  },
+  events: {
+    async linkAccount({ user, account, profile }) {
+      if (profile.email) {
+        await prisma.account.update({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          data: {
+            email: profile.email,
+          },
+        });
+      }
     },
   },
 };
