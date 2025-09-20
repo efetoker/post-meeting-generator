@@ -19,7 +19,7 @@ export function BotConfiguration({
   handleSubmit,
 }: BotConfigurationProps) {
   return (
-    <Card className="mb-8">
+    <Card>
       <CardHeader>
         <CardTitle>Bot Configuration</CardTitle>
       </CardHeader>
