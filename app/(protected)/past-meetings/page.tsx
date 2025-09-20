@@ -1,4 +1,4 @@
-// app/meetings/page.tsx
+// app/past-meetings/page.tsx
 
 "use client";
 
@@ -72,7 +72,7 @@ export default function PastMeetingsPage() {
       <div className="space-y-4">
         {meetings.length > 0 ? (
           meetings.map((meeting) => (
-            <Link href={`/meetings/${meeting.id}`} key={meeting.id}>
+            <Link href={`/past-meetings/${meeting.id}`} key={meeting.id}>
               <Card className="hover:bg-muted/50 cursor-pointer transition-colors">
                 <CardHeader>
                   <div className="flex items-start justify-between">

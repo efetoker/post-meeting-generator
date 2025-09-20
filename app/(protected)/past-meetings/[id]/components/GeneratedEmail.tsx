@@ -1,4 +1,4 @@
-// app/meetings/[id]/components/GeneratedEmail.tsx
+// app/past-meetings/[id]/components/GeneratedEmail.tsx
 
 "use client";
 

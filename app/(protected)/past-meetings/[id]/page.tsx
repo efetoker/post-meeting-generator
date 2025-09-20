@@ -1,4 +1,4 @@
-// app/meetings/[id]/page.tsx
+// app/past-meetings/[id]/page.tsx
 
 "use client";
 

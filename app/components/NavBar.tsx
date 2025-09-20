@@ -25,7 +25,7 @@ export default async function Navbar() {
           {session && (
             <>
               <Link href="/upcoming-meetings">Upcoming Meetings</Link>
-              <Link href="/meetings">Past Meetings</Link>
+              <Link href="/past-meetings">Past Meetings</Link>
               <Link href="/settings">Settings</Link>
             </>
           )}
