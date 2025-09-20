@@ -59,6 +59,23 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  events: {
+    async linkAccount({ user, account, profile }) {
+      if (profile.email) {
+        await prisma.account.update({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          data: {
+            email: profile.email,
+          },
+        });
+      }
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);
