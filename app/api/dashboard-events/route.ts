@@ -1,15 +1,19 @@
 // app/api/dashboard-events/route.ts
 
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { searchParams } = new URL(request.url);
+  const pageTokenParam = searchParams.get("pageToken") || null;
+  const maxResults = "10";
 
   try {
     const googleAccounts = await prisma.account.findMany({
@@ -19,6 +23,7 @@ export async function GET() {
     if (googleAccounts.length === 0) return NextResponse.json([]);
 
     const allEvents: any[] = [];
+    let nextPageToken = null;
 
     for (const account of googleAccounts) {
       let accessToken = account.access_token;
@@ -75,9 +80,13 @@ export async function GET() {
         "https://www.googleapis.com/calendar/v3/calendars/primary/events"
       );
       calendarApiUrl.searchParams.set("timeMin", new Date().toISOString());
-      calendarApiUrl.searchParams.set("maxResults", "10");
+      calendarApiUrl.searchParams.set("maxResults", maxResults);
       calendarApiUrl.searchParams.set("singleEvents", "true");
       calendarApiUrl.searchParams.set("orderBy", "startTime");
+
+      if (pageTokenParam) {
+        calendarApiUrl.searchParams.set("pageToken", pageTokenParam);
+      }
 
       const calendarResponse = await fetch(calendarApiUrl.toString(), {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -93,6 +102,7 @@ export async function GET() {
           }));
           allEvents.push(...eventsWithAccount);
         }
+        nextPageToken = data.nextPageToken || null;
       } else {
         console.error(
           `Failed to fetch calendar for account ${account.providerAccountId}`,
@@ -134,7 +144,10 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(enrichedEvents);
+    return NextResponse.json({
+      events: enrichedEvents,
+      nextPageToken,
+    });
   } catch (error) {
     console.error("Server Error:", error);
     return NextResponse.json(

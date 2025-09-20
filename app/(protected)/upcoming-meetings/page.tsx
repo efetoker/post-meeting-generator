@@ -10,6 +10,8 @@ import { EmptyState } from "./components/EmptyState";
 import { MeetingGroup } from "./components/MeetingGroup";
 import { getMeetingInfo } from "@/lib/utils";
 import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+
 export interface EnrichedCalendarEvent extends CalendarEvent {
   isRecordingEnabled: boolean;
   sourceAccountId: string;
@@ -23,51 +25,75 @@ export default function UpcomingMeetingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isOperating, setIsOperating] = useState(false);
   const [showAccountEmail, setShowAccountEmail] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  const fetchEvents = async (pageToken: string | null = null) => {
+    try {
+      const url = pageToken
+        ? `/api/dashboard-events?pageToken=${pageToken}`
+        : "/api/dashboard-events";
+      const [eventsRes, connectionsRes] = await Promise.all([
+        fetch(url),
+        fetch("/api/connections"),
+      ]);
+
+      if (!eventsRes.ok) throw new Error("Failed to fetch calendar events.");
+      if (!connectionsRes.ok) throw new Error("Failed to fetch connections.");
+
+      const eventsData = await eventsRes.json();
+      const connectionsData = await connectionsRes.json();
+
+      const googleAccounts = connectionsData.filter(
+        (acc: { provider: string }) => acc.provider === "google"
+      );
+      const hasMultipleAccounts = googleAccounts.length > 1;
+      setShowAccountEmail(hasMultipleAccounts);
+
+      const now = new Date();
+      const upcomingEvents = eventsData.events.filter(
+        (event: EnrichedCalendarEvent) => {
+          const eventEndTime = new Date(event.end.dateTime || event.end.date!);
+          return eventEndTime > now && event.status !== "COMPLETED";
+        }
+      );
+
+      upcomingEvents.sort(
+        (a: any, b: any) =>
+          new Date(a.start.dateTime || a.start.date).getTime() -
+          new Date(b.start.dateTime || b.start.date).getTime()
+      );
+
+      if (pageToken) {
+        setEvents((prevEvents) => [...prevEvents, ...upcomingEvents]);
+      } else {
+        setEvents(upcomingEvents);
+      }
+      setNextPageToken(eventsData.nextPageToken);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+      setIsFetchingMore(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPageData = async () => {
+    const initFetch = async () => {
       try {
-        try {
-          await fetch("/api/cron/poll");
-        } catch (error) {}
-
-        const [eventsRes, connectionsRes] = await Promise.all([
-          fetch("/api/dashboard-events"),
-          fetch("/api/connections"),
-        ]);
-
-        if (!eventsRes.ok) throw new Error("Failed to fetch calendar events.");
-        if (!connectionsRes.ok) throw new Error("Failed to fetch connections.");
-
-        const eventsData = await eventsRes.json();
-        const connectionsData = await connectionsRes.json();
-
-        const googleAccounts = connectionsData.filter(
-          (acc: { provider: string }) => acc.provider === "google"
-        );
-        const hasMultipleAccounts = googleAccounts.length > 1;
-        setShowAccountEmail(hasMultipleAccounts);
-
-        const now = new Date();
-        const upcomingEvents = eventsData.filter(
-          (event: EnrichedCalendarEvent) => {
-            const eventEndTime = new Date(
-              event.end.dateTime || event.end.date!
-            );
-            return eventEndTime > now && event.status !== "COMPLETED";
-          }
-        );
-
-        setEvents(upcomingEvents);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
+        await fetch("/api/cron/poll");
+      } catch (error) {}
+      await fetchEvents();
     };
-
-    fetchPageData();
+    initFetch();
   }, []);
+
+  const handleLoadMore = async () => {
+    if (nextPageToken) {
+      setIsFetchingMore(true);
+      await fetchEvents(nextPageToken);
+    }
+  };
 
   const handleToggleChange = async (
     event: EnrichedCalendarEvent,
@@ -194,6 +220,17 @@ export default function UpcomingMeetingsPage() {
           />
         ))}
       </div>
+      {nextPageToken && (
+        <div className="mt-8 text-center">
+          <Button
+            variant="outline"
+            onClick={handleLoadMore}
+            disabled={isFetchingMore}
+          >
+            {isFetchingMore ? "Loading..." : "Load More"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
