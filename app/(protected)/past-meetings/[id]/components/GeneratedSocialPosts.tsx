@@ -71,7 +71,13 @@ export function GeneratedSocialPosts({
       .promise(promise, {
         loading: "Generating social post...",
         success: (newPost) => {
-          setGeneratedPosts((prev) => [...prev, newPost]);
+          setGeneratedPosts((prev) =>
+            [...prev, newPost].sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
+          );
           setIsDialogOpen(false);
           return "Post generated successfully!";
         },
