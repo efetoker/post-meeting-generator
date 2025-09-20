@@ -8,7 +8,6 @@ import { Logo } from "@/app/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Icon } from "@iconify/react";
-import { cn } from "@/lib/utils";
 
 const NavLink = ({
   href,
@@ -19,7 +18,7 @@ const NavLink = ({
 }) => (
   <Link
     href={href}
-    className="transition-colors hover:text-foreground/80 text-foreground/60"
+    className="text-muted-foreground transition-colors hover:text-foreground"
   >
     {children}
   </Link>
@@ -31,20 +30,21 @@ export default async function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <Logo />
-          <span className="hidden font-bold sm:inline-block">
-            Post-Meeting Generator
-          </span>
-        </Link>
-
-        {session && (
-          <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <NavLink href="/upcoming-meetings">Upcoming Meetings</NavLink>
-            <NavLink href="/past-meetings">Past Meetings</NavLink>
-            <NavLink href="/settings">Settings</NavLink>
-          </div>
-        )}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center space-x-2">
+            <Logo />
+            <span className="hidden font-bold sm:inline-block">
+              Post-Meeting Generator
+            </span>
+          </Link>
+          {session && (
+            <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
+              <NavLink href="/upcoming-meetings">Upcoming Meetings</NavLink>
+              <NavLink href="/past-meetings">Past Meetings</NavLink>
+              <NavLink href="/settings">Settings</NavLink>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-4">
           {session && (
