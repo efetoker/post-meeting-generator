@@ -17,6 +17,8 @@ import { CalendarEvent } from "@/types/calendar";
 
 interface EnrichedCalendarEvent extends CalendarEvent {
   isRecordingEnabled: boolean;
+  sourceAccountId: string;
+  sourceAccountEmail: string | null;
 }
 
 export default function DashboardPage() {
@@ -126,6 +128,12 @@ export default function DashboardPage() {
                   <CardTitle>{event.summary || "No Title"}</CardTitle>
                   <CardDescription>
                     {formatDateTime(event.start.dateTime, event.start.date)}
+
+                    <span className="block mt-1 text-xs text-muted-foreground">
+                      From Calendar:{" "}
+                      {event.sourceAccountEmail ||
+                        `...${event.sourceAccountId.slice(-6)}`}
+                    </span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">
