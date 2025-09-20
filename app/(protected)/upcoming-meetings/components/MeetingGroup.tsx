@@ -12,7 +12,7 @@ export function MeetingGroup({
 }: {
   date: string;
   events: EnrichedCalendarEvent[];
-  onToggleChange: Function;
+  onToggleChange: (event: EnrichedCalendarEvent, isChecked: boolean) => void;
   isOperating: boolean;
   showAccountEmail: boolean;
 }) {

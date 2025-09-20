@@ -2,108 +2,107 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Automation, SocialPost } from "@prisma/client";
+import toast from "react-hot-toast";
+import { PostGeneratorForm } from "./PostGeneratorForm";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Automation, SocialPost } from "@prisma/client";
-import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { SocialPostCard } from "./SocialPostCard";
+import { Icon } from "@iconify/react";
+import { Separator } from "@/components/ui/separator";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
   transcript: string;
+  automations: Automation[];
+  generatedPosts: SocialPost[];
+  setGeneratedPosts: React.Dispatch<React.SetStateAction<SocialPost[]>>;
+  setRefetchTrigger: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export function GeneratedSocialPosts({
   meetingId,
   transcript,
+  automations,
+  generatedPosts,
+  setGeneratedPosts,
+  setRefetchTrigger,
 }: GeneratedSocialPostsProps) {
-  const [automations, setAutomations] = useState<Automation[]>([]);
-  const [selectedAutomationId, setSelectedAutomationId] = useState<
-    string | null
-  >(null);
-  const [generatedPosts, setGeneratedPosts] = useState<SocialPost[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPosting, setIsPosting] = useState<string | null>(null);
-  const [postStatus, setPostStatus] = useState<{ [key: string]: string }>({});
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [generatedPostInDialog, setGeneratedPostInDialog] =
+    useState<SocialPost | null>(null);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [editableContent, setEditableContent] = useState("");
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const [automationsRes, postsRes] = await Promise.all([
-          fetch("/api/automations"),
-          fetch(`/api/meetings/${meetingId}/posts`),
-        ]);
-
-        const automationsData = await automationsRes.json();
-        setAutomations(automationsData);
-
-        if (postsRes.ok) {
-          const postsData = await postsRes.json();
-          setGeneratedPosts(postsData);
-        }
-      } catch (error) {
-        console.error(
-          "Failed to load initial data for social posts component",
-          error
-        );
-      }
-    };
-    fetchInitialData();
-  }, [meetingId]);
-
-  const handleGeneratePost = async () => {
-    if (!selectedAutomationId) return;
-
+  const handleGeneratePost = async (automationId: string) => {
     setIsGenerating(true);
-    try {
-      const response = await fetch("/api/generate/social-post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript,
-          automationId: selectedAutomationId,
-          meetingId,
-        }),
-      });
-      const newPost = await response.json();
-      setGeneratedPosts((prev) => [...prev, newPost]);
-    } catch (error) {
-      console.error("Failed to generate post", error);
-    } finally {
-      setIsGenerating(false);
-      setIsDialogOpen(false);
-    }
-  };
+    setIsPostDialogOpen(true);
+    setGeneratedPostInDialog(null);
+    setEditableContent("");
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+    const promise = fetch("/api/generate/social-post", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        transcript,
+        automationId: automationId,
+        meetingId,
+      }),
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate post.");
+      }
+      return res.json();
+    });
+
+    toast
+      .promise(promise, {
+        loading: "Generating social post...",
+        success: (newPost) => {
+          setGeneratedPostInDialog(newPost);
+          setEditableContent(newPost.content);
+          return "Post generated successfully!";
+        },
+        error: (err) => err.toString(),
+      })
+      .finally(() => {
+        setIsGenerating(false);
+      });
   };
 
   const handlePost = async (post: SocialPost) => {
+    if (!editableContent || !post.id) {
+      toast.error("No content to post.");
+      return;
+    }
+
     setIsPosting(post.id);
-    setPostStatus((prev) => ({ ...prev, [post.id]: "Posting..." }));
+
     try {
+      const updateResponse = await fetch(`/api/post/${post.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editableContent }),
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.error || "Failed to save edited post.");
+      }
+
       let endpoint = "";
       if (post.platform.toLowerCase() === "linkedin") {
         endpoint = "/api/post/linkedin";
@@ -113,128 +112,122 @@ export function GeneratedSocialPosts({
         throw new Error("Posting to this platform is not supported.");
       }
 
-      const response = await fetch(endpoint, {
+      const postResponse = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: post.content, postId: post.id }),
+        body: JSON.stringify({ content: editableContent, postId: post.id }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!postResponse.ok) {
+        const errorData = await postResponse.json();
         throw new Error(errorData.error || "Failed to post.");
       }
 
-      setPostStatus((prev) => ({ ...prev, [post.id]: "Posted successfully!" }));
-      setGeneratedPosts((prevPosts) =>
-        prevPosts.map((p) =>
-          p.id === post.id ? { ...p, status: "PUBLISHED" } : p
-        )
-      );
+      toast.success("Posted successfully!");
+      setIsPostDialogOpen(false);
+      setRefetchTrigger((prev) => prev + 1);
     } catch (error: any) {
-      setPostStatus((prev) => ({ ...prev, [post.id]: error.message }));
-      console.error("Failed to post:", error);
+      toast.error(error.message);
     } finally {
       setIsPosting(null);
     }
   };
 
   const handleDelete = async (postId: string) => {
-    try {
-      await fetch(`/api/post/${postId}`, {
-        method: "DELETE",
+    setIsDeleting(postId);
+    const promise = fetch(`/api/post/${postId}`, {
+      method: "DELETE",
+    }).then((res) => {
+      if (!res.ok) throw new Error("Failed to delete post.");
+    });
+
+    toast
+      .promise(promise, {
+        loading: "Deleting post...",
+        success: () => {
+          setRefetchTrigger((prev) => prev + 1);
+          return "Post deleted.";
+        },
+        error: (err) => err.toString(),
+      })
+      .finally(() => {
+        setIsDeleting(null);
       });
-      setGeneratedPosts((prev) => prev.filter((p) => p.id !== postId));
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-    }
   };
 
   return (
     <div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline">Generate Social Media Post</Button>
-        </DialogTrigger>
+      <PostGeneratorForm
+        automations={automations}
+        onGenerate={handleGeneratePost}
+        isGenerating={isGenerating}
+      />
+      <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Generate a post</DialogTitle>
+            <DialogTitle>Review Your Post</DialogTitle>
+            <DialogDescription>
+              Review and either copy or post the generated content.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Label>Select an Automation</Label>
-            <Select onValueChange={setSelectedAutomationId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose an automation..." />
-              </SelectTrigger>
-              <SelectContent>
-                {automations.map((auto) => (
-                  <SelectItem key={auto.id} value={auto.id}>
-                    {auto.name} ({auto.platform})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {isGenerating ? (
+            <div className="space-y-4 py-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ) : (
+            generatedPostInDialog && (
+              <div className="py-4">
+                <Textarea
+                  value={editableContent}
+                  onChange={(e) => setEditableContent(e.target.value)}
+                  rows={8}
+                  disabled={isGenerating || isPosting !== null}
+                />
+              </div>
+            )
+          )}
+          <DialogFooter>
             <Button
-              onClick={handleGeneratePost}
-              disabled={isGenerating || !selectedAutomationId}
-              className="w-full"
+              variant="outline"
+              onClick={() => {
+                if (generatedPostInDialog) {
+                  navigator.clipboard.writeText(editableContent || "");
+                  toast.success("Post copied to clipboard!");
+                }
+              }}
+              disabled={
+                isGenerating || !generatedPostInDialog || isPosting !== null
+              }
             >
-              {isGenerating ? "Generating..." : "Generate"}
+              <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
+              Copy
             </Button>
-          </div>
+            <Button
+              onClick={() =>
+                generatedPostInDialog && handlePost(generatedPostInDialog)
+              }
+              disabled={isGenerating || isPosting === generatedPostInDialog?.id}
+            >
+              {isPosting === generatedPostInDialog?.id
+                ? "Posting..."
+                : generatedPostInDialog && generatedPostInDialog.platform
+                ? `Post to ${generatedPostInDialog.platform}`
+                : "Post"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <div className="space-y-6 mt-4">
+      {generatedPosts.length > 0 && <Separator className="my-4" />}
+      <div className="space-y-4">
         {generatedPosts.map((post) => (
-          <div key={post.id}>
-            <h2 className="text-2xl font-bold mb-4">
-              {post.status === "DRAFT" ? "Draft" : "Published"} {post.platform}{" "}
-              Post
-            </h2>
-            <Card>
-              <CardContent className="p-6">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                  {post.content}
-                </pre>
-              </CardContent>
-              <CardFooter className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  {post.status === "DRAFT" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(post.id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleCopy(post.content)}
-                  >
-                    Copy
-                  </Button>
-                  {post.status === "DRAFT" && (
-                    <Button
-                      onClick={() => handlePost(post)}
-                      disabled={isPosting === post.id}
-                    >
-                      {isPosting === post.id
-                        ? "Posting..."
-                        : `Post to ${post.platform}`}
-                    </Button>
-                  )}
-                </div>
-                {postStatus[post.id] && (
-                  <p className="text-sm text-muted-foreground">
-                    {postStatus[post.id]}
-                  </p>
-                )}
-              </CardFooter>
-            </Card>
-          </div>
+          <SocialPostCard
+            key={post.id}
+            post={post}
+            onDelete={handleDelete}
+            isOperating={isDeleting === post.id}
+          />
         ))}
       </div>
     </div>

@@ -14,7 +14,7 @@ export function MeetingCard({
   showAccountEmail,
 }: {
   event: EnrichedCalendarEvent;
-  onToggleChange: Function;
+  onToggleChange: (event: EnrichedCalendarEvent, isChecked: boolean) => void;
   isOperating: boolean;
   showAccountEmail: boolean;
 }) {
@@ -74,9 +74,7 @@ export function MeetingCard({
           id={`record-${event.id}`}
           disabled={isOperating || !isRecordable}
           defaultChecked={event.isRecordingEnabled}
-          onCheckedChange={(isChecked) =>
-            onToggleChange(event, isChecked, meetingInfo)
-          }
+          onCheckedChange={(isChecked) => onToggleChange(event, isChecked)}
         />
       </div>
     </div>

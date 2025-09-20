@@ -2,28 +2,31 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface GeneratedEmailProps {
   transcript: string;
+  generatedEmail: string;
+  setGeneratedEmail: (email: string) => void;
+  isGenerating: boolean;
+  setIsGenerating: (isGenerating: boolean) => void;
 }
 
-export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
-  const [generatedEmail, setGeneratedEmail] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  useEffect(() => {
-    if (transcript && !generatedEmail && !isGenerating) {
-      handleGenerateEmail();
-    }
-  }, [transcript, isGenerating]);
-
+export function GeneratedEmail({
+  transcript,
+  generatedEmail,
+  setGeneratedEmail,
+  isGenerating,
+  setIsGenerating,
+}: GeneratedEmailProps) {
   const handleGenerateEmail = async () => {
+    if (isGenerating) return;
+
     setIsGenerating(true);
     setGeneratedEmail("");
     const promise = fetch("/api/generate/email", {
@@ -54,6 +57,12 @@ export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
         setIsGenerating(false);
       });
   };
+
+  useEffect(() => {
+    if (transcript && !generatedEmail && !isGenerating) {
+      handleGenerateEmail();
+    }
+  }, [transcript, generatedEmail, isGenerating, handleGenerateEmail]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedEmail);
@@ -87,11 +96,15 @@ export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
       )}
 
       <div className="mt-4 flex gap-2 justify-between">
-        <Button variant="outline" onClick={handleCopy}>
+        <Button
+          variant="outline"
+          onClick={handleCopy}
+          disabled={!generatedEmail || isGenerating}
+        >
           <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
           Copy
         </Button>
-        <Button onClick={handleGenerateEmail}>
+        <Button onClick={handleGenerateEmail} disabled={isGenerating}>
           <Icon icon="lucide:refresh-cw" className="mr-2 h-4 w-4" />
           Regenerate
         </Button>
