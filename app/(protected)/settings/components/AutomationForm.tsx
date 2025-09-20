@@ -29,6 +29,7 @@ export function AutomationForm({
 }: AutomationFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+      {initialData && <input type="hidden" name="id" value={initialData.id} />}
       <div>
         <Label htmlFor="name" className="mb-2">
           Automation Name
