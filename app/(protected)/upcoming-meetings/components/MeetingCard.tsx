@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { PlatformIcon } from "./PlatformIcon";
 import { Switch } from "@/components/ui/switch";
 import { EnrichedCalendarEvent } from "../page";
-import { getMeetingInfo } from "@/lib/utils";
+import { cn, getMeetingInfo } from "@/lib/utils";
 import { AttendeeAvatars } from "./AttendeeAvatars";
 import { Status, StatusBadge } from "./StatusBadge";
 
@@ -38,9 +38,10 @@ export function MeetingCard({
 
   return (
     <div
-      className={`p-4 border rounded-lg flex items-center gap-4 transition-colors ${
-        !isRecordable ? "bg-muted/50" : "bg-card"
-      }`}
+      className={cn(
+        "p-4 border rounded-lg flex items-center gap-4 transition-colors",
+        !isRecordable && "bg-muted/50 opacity-70"
+      )}
     >
       <div className="flex flex-col items-center justify-center w-24">
         <div className="font-semibold text-lg">{startTime.split(" ")[0]}</div>
@@ -54,35 +55,35 @@ export function MeetingCard({
       <div className="flex-1 border-l pl-4">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-semibold">{event.summary || "No Title"}</h3>
-          <StatusBadge status={event.status as Status} />
+          {isRecordable && <StatusBadge status={event.status as Status} />}
         </div>
         {showAccountEmail && (
           <p className="text-sm text-muted-foreground">
             From: {event.sourceAccountEmail}
           </p>
         )}
-        <AttendeeAvatars attendees={event.attendees} />
+        {isRecordable && <AttendeeAvatars attendees={event.attendees} />}
       </div>
-      <div className="flex items-center space-x-3 w-40 justify-end">
-        <Label
-          htmlFor={`record-${event.id}`}
-          className={`text-sm ${
-            !isRecordable
-              ? "text-gray-400 cursor-not-allowed"
-              : "cursor-pointer"
-          }`}
-        >
-          Record
-        </Label>
-        <Switch
-          id={`record-${event.id}`}
-          disabled={
-            isOperating || !isRecordable || event.status !== "SCHEDULED"
-          }
-          defaultChecked={event.isRecordingEnabled}
-          onCheckedChange={(isChecked) => onToggleChange(event, isChecked)}
-        />
-      </div>
+      {isRecordable ? (
+        <div className="flex items-center space-x-3 w-40 justify-end">
+          <Label
+            htmlFor={`record-${event.id}`}
+            className="text-sm cursor-pointer"
+          >
+            Record
+          </Label>
+          <Switch
+            id={`record-${event.id}`}
+            disabled={isOperating || event.status !== "SCHEDULED"}
+            defaultChecked={event.isRecordingEnabled}
+            onCheckedChange={(isChecked) => onToggleChange(event, isChecked)}
+          />
+        </div>
+      ) : (
+        <div className="w-40 text-right text-sm text-muted-foreground pr-2">
+          No meeting link found
+        </div>
+      )}
     </div>
   );
 }
