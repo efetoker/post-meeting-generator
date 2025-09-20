@@ -8,11 +8,13 @@ import { Meeting } from "@prisma/client";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { formatTranscript } from "@/lib/utils";
+import { GeneratedEmail } from "./components/GeneratedEmail";
+import { GeneratedSocialPosts } from "./components/GeneratedSocialPosts";
 
 export default function MeetingDetailPage() {
   const params = useParams();
@@ -49,24 +51,37 @@ export default function MeetingDetailPage() {
   const cleanTranscript = formatTranscript(meeting.transcript as string | null);
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="mb-6">
+    <div className="container mx-auto max-w-4xl p-4 md:p-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">{meeting.title}</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mt-1">
           {new Date(meeting.startTime).toLocaleString()}
         </p>
       </div>
 
-      <Card>
+      <Card className="mb-8 bg-muted/20">
         <CardHeader>
-          <CardTitle>Meeting Transcript</CardTitle>
+          <CardTitle>AI Toolkit</CardTitle>
+          <CardDescription>
+            Generate content from this meeting&#39;s transcript.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <pre className="whitespace-pre-wrap font-sans text-sm">
-            {cleanTranscript}
-          </pre>
+        <CardContent className="space-y-4">
+          <GeneratedEmail transcript={cleanTranscript} />
+          <GeneratedSocialPosts meetingId={id} transcript={cleanTranscript} />
         </CardContent>
       </Card>
+
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
+        <Card>
+          <CardContent className="p-6">
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
+              {cleanTranscript}
+            </pre>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

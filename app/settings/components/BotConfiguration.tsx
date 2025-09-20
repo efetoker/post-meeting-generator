@@ -1,0 +1,48 @@
+// app/settings/components/BotConfiguration.tsx
+
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface BotConfigurationProps {
+  offset: string;
+  setOffset: (value: string) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  message: string;
+}
+
+export function BotConfiguration({
+  offset,
+  setOffset,
+  handleSubmit,
+  message,
+}: BotConfigurationProps) {
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle>Bot Configuration</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="offset">Join Meeting (minutes before start)</Label>
+            <Input
+              id="offset"
+              type="number"
+              value={offset}
+              onChange={(e) => setOffset(e.target.value)}
+              placeholder="e.g., 5"
+              min="0"
+              required
+            />
+          </div>
+          <Button type="submit">Save Settings</Button>
+          {message && <p className="text-sm text-gray-600 pt-2">{message}</p>}
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

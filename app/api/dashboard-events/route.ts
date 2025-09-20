@@ -12,35 +12,102 @@ export async function GET() {
   }
 
   try {
-    const googleAccount = await prisma.account.findFirst({
+    const googleAccounts = await prisma.account.findMany({
       where: { userId: session.user.id, provider: "google" },
     });
 
-    if (!googleAccount?.access_token) {
-      return NextResponse.json(
-        { error: "Google account not connected." },
-        { status: 404 }
+    if (googleAccounts.length === 0) return NextResponse.json([]);
+
+    const allEvents: any[] = [];
+
+    for (const account of googleAccounts) {
+      let accessToken = account.access_token;
+
+      if (
+        account.expires_at &&
+        account.expires_at * 1000 < Date.now() - 60000
+      ) {
+        console.log(
+          `Token for account ${account.providerAccountId} expired. Refreshing...`
+        );
+
+        try {
+          const response = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: process.env.GOOGLE_CLIENT_ID!,
+              client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+              refresh_token: account.refresh_token!,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const newTokens = await response.json();
+          if (!response.ok) throw new Error(newTokens.error_description);
+
+          await prisma.account.update({
+            where: {
+              provider_providerAccountId: {
+                provider: "google",
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            data: {
+              access_token: newTokens.access_token,
+              expires_at: Math.floor(Date.now() / 1000) + newTokens.expires_in,
+            },
+          });
+
+          accessToken = newTokens.access_token;
+        } catch (error) {
+          console.error(
+            `Failed to refresh token for account ${account.providerAccountId}`,
+            error
+          );
+          continue;
+        }
+      }
+
+      if (!accessToken) continue;
+
+      const calendarApiUrl = new URL(
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events"
       );
+      calendarApiUrl.searchParams.set("timeMin", new Date().toISOString());
+      calendarApiUrl.searchParams.set("maxResults", "10");
+      calendarApiUrl.searchParams.set("singleEvents", "true");
+      calendarApiUrl.searchParams.set("orderBy", "startTime");
+
+      const calendarResponse = await fetch(calendarApiUrl.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (calendarResponse.ok) {
+        const data = await calendarResponse.json();
+        if (data.items) {
+          const eventsWithAccount = data.items.map((event: any) => ({
+            ...event,
+            sourceAccountId: account.providerAccountId,
+            sourceAccountEmail: account.email,
+          }));
+          allEvents.push(...eventsWithAccount);
+        }
+      } else {
+        console.error(
+          `Failed to fetch calendar for account ${account.providerAccountId}`,
+          await calendarResponse.json()
+        );
+      }
     }
 
-    const calendarApiUrl = new URL(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+    allEvents.sort(
+      (a, b) =>
+        new Date(a.start.dateTime || a.start.date).getTime() -
+        new Date(b.start.dateTime || b.start.date).getTime()
     );
-    calendarApiUrl.searchParams.set("timeMin", new Date().toISOString());
-    calendarApiUrl.searchParams.set("maxResults", "10");
-    calendarApiUrl.searchParams.set("singleEvents", "true");
-    calendarApiUrl.searchParams.set("orderBy", "startTime");
 
-    const response = await fetch(calendarApiUrl.toString(), {
-      headers: { Authorization: `Bearer ${googleAccount.access_token}` },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch calendar events from Google.");
-    }
-
-    const googleEvents = await response.json();
-    const eventIds = googleEvents.items.map((event: any) => event.id);
+    const eventIds = allEvents.map((event: any) => event.id);
 
     const ourMeetings = await prisma.meeting.findMany({
       where: {
@@ -57,7 +124,7 @@ export async function GET() {
       ourMeetings.map((m) => [m.googleEventId, m.recordingEnabled])
     );
 
-    const enrichedEvents = googleEvents.items.map((event: any) => ({
+    const enrichedEvents = allEvents.map((event: any) => ({
       ...event,
       isRecordingEnabled: recordingStatusMap.get(event.id) || false,
     }));

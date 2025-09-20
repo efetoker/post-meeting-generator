@@ -24,6 +24,7 @@ model Account {
   id_token          String? @db.Text
   session_state     String?
   refresh_token_expires_in Int?
+  email         String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -46,10 +47,13 @@ model User {
   image         String?
 
   botJoinOffsetMinutes Int @default(5)
-  
+  defaultFacebookPageId    String?
+  facebookPageAccessToken String? @db.Text
+
   accounts      Account[]
   sessions      Session[]
   meetings      Meeting[]
+  automations   Automation[]
 }
 
 model VerificationToken {
@@ -78,9 +82,36 @@ model Meeting {
   recallBotId     String?
   transcript      String? @db.Text
   followUpEmail   String? @db.Text
+  socialPosts     SocialPost[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Automation {
+  id          String @id @default(cuid())
+  name        String
+  platform    String // e.g., "linkedin", "facebook"
+  prompt      String @db.Text
+  example     String? @db.Text
+
+  userId      String
+  user        User   @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SocialPost {
+  id        String @id @default(cuid())
+  platform  String // e.g., "LinkedIn", "Facebook"
+  content   String @db.Text
+  status    String @default("DRAFT") // DRAFT or PUBLISHED
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model CronLog {

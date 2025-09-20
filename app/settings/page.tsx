@@ -1,56 +1,108 @@
 // app/settings/page.tsx
-
 "use client";
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormEvent, useEffect, useState } from "react";
+import { Account, Automation } from "@prisma/client";
+import { BotConfiguration } from "@/app/settings/components/BotConfiguration";
+import { SocialConnections } from "@/app/settings/components/SocialConnections";
+import { Automations } from "@/app/settings/components/Automations";
+import { GoogleConnections } from "./components/GoogleConnections";
 
 export default function SettingsPage() {
   const [offset, setOffset] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [connections, setConnections] = useState<Account[]>([]);
+  const [automations, setAutomations] = useState<Automation[]>([]);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const loadPageData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/settings");
-        if (!response.ok) throw new Error("Could not load settings.");
+        const [settingsRes, connectionsRes, automationsRes] = await Promise.all(
+          [
+            fetch("/api/settings"),
+            fetch("/api/connections"),
+            fetch("/api/automations"),
+          ]
+        );
 
-        const data = await response.json();
-        setOffset(data.botJoinOffsetMinutes.toString());
+        if (!settingsRes.ok) throw new Error("Could not load settings.");
+        const settingsData = await settingsRes.json();
+        setOffset(settingsData.botJoinOffsetMinutes.toString());
+
+        if (!connectionsRes.ok) throw new Error("Could not load connections.");
+        const connectionsData = await connectionsRes.json();
+        setConnections(connectionsData);
+
+        if (!automationsRes.ok) throw new Error("Could not load automations.");
+        const automationsData = await automationsRes.json();
+        setAutomations(automationsData);
       } catch (error) {
-        setMessage("Failed to load current settings.");
+        setMessage("Failed to load page data.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSettings();
+    loadPageData();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAddAutomation = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newAutomation = {
+      name: formData.get("name") as string,
+      platform: formData.get("platform") as string,
+      prompt: formData.get("prompt") as string,
+      example: formData.get("example") as string,
+    };
+
+    const response = await fetch("/api/automations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newAutomation),
+    });
+
+    if (response.ok) {
+      const created = await response.json();
+      setAutomations([...automations, created]);
+      // !TODO: Close dialog
+    }
+  };
+
+  const handleSaveOffset = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("Saving...");
-
     try {
       const response = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ botJoinOffsetMinutes: offset }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save settings.");
-      }
-
+      if (!response.ok) throw new Error("Failed to save settings.");
       const result = await response.json();
       setMessage(result.message || "Settings saved successfully!");
     } catch (error: any) {
       setMessage(error.message || "An error occurred.");
+    }
+  };
+
+  const handleDisconnect = async (
+    provider: string,
+    providerAccountId: string
+  ) => {
+    try {
+      await fetch("/api/connections/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, providerAccountId }),
+      });
+      setConnections(
+        connections.filter((c) => c.providerAccountId !== providerAccountId)
+      );
+    } catch (error) {
+      console.error(`Failed to disconnect ${provider}`, error);
     }
   };
 
@@ -61,31 +113,28 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Bot Configuration</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="offset">
-                Join Meeting (minutes before start)
-              </Label>
-              <Input
-                id="offset"
-                type="number"
-                value={offset}
-                onChange={(e) => setOffset(e.target.value)}
-                placeholder="e.g., 5"
-                min="0"
-                required
-              />
-            </div>
-            <Button type="submit">Save Settings</Button>
-            {message && <p className="text-sm text-gray-600 pt-2">{message}</p>}
-          </form>
-        </CardContent>
-      </Card>
+
+      <GoogleConnections
+        connections={connections}
+        handleDisconnect={handleDisconnect}
+      />
+
+      <BotConfiguration
+        offset={offset}
+        setOffset={setOffset}
+        handleSubmit={handleSaveOffset}
+        message={message}
+      />
+
+      <SocialConnections
+        connections={connections}
+        handleDisconnect={handleDisconnect}
+      />
+
+      <Automations
+        automations={automations}
+        handleAddAutomation={handleAddAutomation}
+      />
     </div>
   );
 }

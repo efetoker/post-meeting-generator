@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { botJoinOffsetMinutes: true },
+      select: { botJoinOffsetMinutes: true, defaultFacebookPageId: true },
     });
 
     if (!user) {
