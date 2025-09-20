@@ -9,11 +9,17 @@ import { SocialConnections } from "@/app/(protected)/settings/components/SocialC
 import { Automations } from "@/app/(protected)/settings/components/Automations";
 import { GoogleConnections } from "./components/GoogleConnections";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
   const [offset, setOffset] = useState("");
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [connections, setConnections] = useState<Account[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
@@ -42,7 +48,7 @@ export default function SettingsPage() {
         const automationsData = await automationsRes.json();
         setAutomations(automationsData);
       } catch (error) {
-        setMessage("Failed to load page data.");
+        toast.error((error as Error).message || "Failed to load data.");
       } finally {
         setIsLoading(false);
       }
@@ -76,19 +82,23 @@ export default function SettingsPage() {
 
   const handleSaveOffset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("Saving...");
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ botJoinOffsetMinutes: offset }),
-      });
-      if (!response.ok) throw new Error("Failed to save settings.");
-      const result = await response.json();
-      setMessage(result.message || "Settings saved successfully!");
-    } catch (error: any) {
-      setMessage(error.message || "An error occurred.");
-    }
+
+    const promise = fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ botJoinOffsetMinutes: offset }),
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to save settings. Please try again.");
+      }
+      return res.json();
+    });
+
+    toast.promise(promise, {
+      loading: "Saving settings...",
+      success: "Settings saved successfully!",
+      error: (err) => err.toString(),
+    });
   };
 
   const handleDisconnect = async (
@@ -110,6 +120,7 @@ export default function SettingsPage() {
   };
 
   if (isLoading) {
+    // TODO: Better loading state
     return <div className="p-8">Loading settings...</div>;
   }
 
@@ -141,7 +152,6 @@ export default function SettingsPage() {
                 offset={offset}
                 setOffset={setOffset}
                 handleSubmit={handleSaveOffset}
-                message={message}
               />
             </CardContent>
           </Card>
