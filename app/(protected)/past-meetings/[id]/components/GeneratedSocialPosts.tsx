@@ -4,10 +4,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Automation, SocialPost } from "@prisma/client";
 import toast from "react-hot-toast";
-import { Icon } from "@iconify/react";
 import { PostGeneratorForm } from "./PostGeneratorForm";
 import {
   Dialog,
@@ -19,25 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { SocialPostCard } from "./SocialPostCard";
+import { Icon } from "@iconify/react";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
   transcript: string;
   automations: Automation[];
-  setAutomations: (automations: Automation[]) => void;
   generatedPosts: SocialPost[];
   setGeneratedPosts: React.Dispatch<React.SetStateAction<SocialPost[]>>;
   setRefetchTrigger: React.Dispatch<React.SetStateAction<number>>;
@@ -53,6 +39,7 @@ export function GeneratedSocialPosts({
 }: GeneratedSocialPostsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPosting, setIsPosting] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [generatedPostInDialog, setGeneratedPostInDialog] =
     useState<SocialPost | null>(null);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
@@ -93,11 +80,6 @@ export function GeneratedSocialPosts({
       .finally(() => {
         setIsGenerating(false);
       });
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(editableContent || "");
-    toast.success("Post copied to clipboard!");
   };
 
   const handlePost = async (post: SocialPost) => {
@@ -151,20 +133,25 @@ export function GeneratedSocialPosts({
   };
 
   const handleDelete = async (postId: string) => {
+    setIsDeleting(postId);
     const promise = fetch(`/api/post/${postId}`, {
       method: "DELETE",
     }).then((res) => {
       if (!res.ok) throw new Error("Failed to delete post.");
     });
 
-    toast.promise(promise, {
-      loading: "Deleting post...",
-      success: () => {
-        setRefetchTrigger((prev) => prev + 1);
-        return "Post deleted.";
-      },
-      error: (err) => err.toString(),
-    });
+    toast
+      .promise(promise, {
+        loading: "Deleting post...",
+        success: () => {
+          setRefetchTrigger((prev) => prev + 1);
+          return "Post deleted.";
+        },
+        error: (err) => err.toString(),
+      })
+      .finally(() => {
+        setIsDeleting(null);
+      });
   };
 
   return (
@@ -203,7 +190,12 @@ export function GeneratedSocialPosts({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={handleCopy}
+              onClick={() => {
+                if (generatedPostInDialog) {
+                  navigator.clipboard.writeText(editableContent || "");
+                  toast.success("Post copied to clipboard!");
+                }
+              }}
               disabled={
                 isGenerating || !generatedPostInDialog || isPosting !== null
               }
@@ -228,60 +220,12 @@ export function GeneratedSocialPosts({
       </Dialog>
       <div className="space-y-6 mt-4">
         {generatedPosts.map((post) => (
-          <div key={post.id}>
-            <h2 className="text-xl font-bold mb-4">
-              <Icon
-                icon={
-                  post.platform.toLowerCase() === "linkedin"
-                    ? "logos:linkedin-icon"
-                    : "logos:facebook"
-                }
-                className="inline-block size-6 mr-2"
-              />
-              {post.platform} Post
-            </h2>
-            <Card>
-              <CardContent className="px-6">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                  {post.content}
-                </pre>
-              </CardContent>
-              <CardFooter className="flex justify-end items-center">
-                <div className="flex gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        Remove from Database
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action will permanently delete this post from
-                          your database and cannot be undone. Please remember to
-                          delete the post from the published platform (e.g.,
-                          LinkedIn or Facebook) yourself, as this action will
-                          only remove it from the database.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(post.id)}
-                          className={cn(
-                            buttonVariants({ variant: "destructive" })
-                          )}
-                        >
-                          Remove
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
+          <SocialPostCard
+            key={post.id}
+            post={post}
+            onDelete={handleDelete}
+            isOperating={isDeleting === post.id}
+          />
         ))}
       </div>
     </div>
