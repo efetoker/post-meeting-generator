@@ -162,7 +162,6 @@ export default function MeetingDetailPage() {
                   meetingId={id}
                   transcript={cleanTranscript}
                   automations={automations}
-                  setAutomations={setAutomations}
                   generatedPosts={generatedPosts}
                   setGeneratedPosts={setGeneratedPosts}
                   setRefetchTrigger={setRefetchTrigger}
