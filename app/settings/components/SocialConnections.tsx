@@ -20,14 +20,11 @@ import {
 import { Icon } from "@iconify/react";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
-
-interface Connection {
-  provider: string;
-}
+import { Account } from "@prisma/client";
 
 interface SocialConnectionsProps {
-  connections: Connection[];
-  handleDisconnect: (provider: string) => void;
+  connections: Account[];
+  handleDisconnect: (provider: string, providerAccountId: string) => void;
 }
 
 interface FacebookPage {
@@ -45,15 +42,11 @@ export function SocialConnections({
   const [pageSelectionMessage, setPageSelectionMessage] = useState("");
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
-  const isLinkedInConnected = connections.some(
-    (c) => c.provider === "linkedin"
-  );
-  const isFacebookConnected = connections.some(
-    (c) => c.provider === "facebook"
-  );
+  const linkedInAccount = connections.find((c) => c.provider === "linkedin");
+  const facebookAccount = connections.find((c) => c.provider === "facebook");
 
   useEffect(() => {
-    if (isFacebookConnected) {
+    if (facebookAccount) {
       setIsLoadingPages(true);
       const fetchInitialData = async () => {
         try {
@@ -77,7 +70,7 @@ export function SocialConnections({
       };
       fetchInitialData();
     }
-  }, [isFacebookConnected]);
+  }, [facebookAccount]);
 
   const savePageSelection = async (
     pageId: string | null,
@@ -122,16 +115,20 @@ export function SocialConnections({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* LinkedIn Section */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-2 border rounded-md">
             <span>LinkedIn</span>
-            {isLinkedInConnected ? (
+            {linkedInAccount ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-green-600">Connected</span>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDisconnect("linkedin")}
+                  onClick={() =>
+                    handleDisconnect(
+                      "linkedin",
+                      linkedInAccount.providerAccountId
+                    )
+                  }
                 >
                   Disconnect
                 </Button>
@@ -141,16 +138,20 @@ export function SocialConnections({
             )}
           </div>
 
-          {/* Facebook Section */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-2 border rounded-md">
             <span>Facebook</span>
-            {isFacebookConnected ? (
+            {facebookAccount ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-green-600">Connected</span>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDisconnect("facebook")}
+                  onClick={() =>
+                    handleDisconnect(
+                      "facebook",
+                      facebookAccount.providerAccountId
+                    )
+                  }
                 >
                   Disconnect
                 </Button>
@@ -160,7 +161,7 @@ export function SocialConnections({
             )}
           </div>
 
-          {isFacebookConnected && (
+          {facebookAccount && (
             <div className="pt-2 pl-2">
               <label className="text-sm font-medium block mb-2">
                 Default Page to Post To
