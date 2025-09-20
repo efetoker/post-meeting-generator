@@ -57,29 +57,6 @@ export default function SettingsPage() {
     loadPageData();
   }, []);
 
-  const handleAddAutomation = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const newAutomation = {
-      name: formData.get("name") as string,
-      platform: formData.get("platform") as string,
-      prompt: formData.get("prompt") as string,
-      example: formData.get("example") as string,
-    };
-
-    const response = await fetch("/api/automations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newAutomation),
-    });
-
-    if (response.ok) {
-      const created = await response.json();
-      setAutomations([...automations, created]);
-      // !TODO: Close dialog
-    }
-  };
-
   const handleSaveOffset = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -171,7 +148,7 @@ export default function SettingsPage() {
         <TabsContent value="automations">
           <Automations
             automations={automations}
-            handleAddAutomation={handleAddAutomation}
+            setAutomations={setAutomations}
           />
         </TabsContent>
       </Tabs>
