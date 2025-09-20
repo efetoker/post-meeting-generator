@@ -5,24 +5,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Automation, SocialPost } from "@prisma/client";
-import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import { Icon } from "@iconify/react";
+import { PostGeneratorForm } from "./PostGeneratorForm";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
@@ -40,23 +26,17 @@ export function GeneratedSocialPosts({
   generatedPosts,
   setGeneratedPosts,
 }: GeneratedSocialPostsProps) {
-  const [selectedAutomationId, setSelectedAutomationId] = useState<
-    string | null
-  >(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPosting, setIsPosting] = useState<string | null>(null);
 
-  const handleGeneratePost = async () => {
-    if (!selectedAutomationId) return;
-
+  const handleGeneratePost = async (automationId: string) => {
     setIsGenerating(true);
     const promise = fetch("/api/generate/social-post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         transcript,
-        automationId: selectedAutomationId,
+        automationId: automationId,
         meetingId,
       }),
     }).then(async (res) => {
@@ -78,7 +58,6 @@ export function GeneratedSocialPosts({
                 new Date(a.createdAt).getTime()
             )
           );
-          setIsDialogOpen(false);
           return "Post generated successfully!";
         },
         error: (err) => err.toString(),
@@ -155,38 +134,11 @@ export function GeneratedSocialPosts({
 
   return (
     <div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline">Generate Social Media Post</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate a post</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Label>Select an Automation</Label>
-            <Select onValueChange={setSelectedAutomationId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose an automation..." />
-              </SelectTrigger>
-              <SelectContent>
-                {automations.map((auto) => (
-                  <SelectItem key={auto.id} value={auto.id}>
-                    {auto.name} ({auto.platform})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleGeneratePost}
-              disabled={isGenerating || !selectedAutomationId}
-              className="w-full"
-            >
-              {isGenerating ? "Generating..." : "Generate"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PostGeneratorForm
+        automations={automations}
+        onGenerate={handleGeneratePost}
+        isGenerating={isGenerating}
+      />
 
       <div className="space-y-6 mt-4">
         {generatedPosts.map((post) => (
