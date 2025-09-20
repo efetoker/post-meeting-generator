@@ -1,4 +1,5 @@
-// app/settings/page.tsx
+// app/(protected)/settings/page.tsx
+
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
@@ -7,6 +8,8 @@ import { BotConfiguration } from "@/app/(protected)/settings/components/BotConfi
 import { SocialConnections } from "@/app/(protected)/settings/components/SocialConnections";
 import { Automations } from "@/app/(protected)/settings/components/Automations";
 import { GoogleConnections } from "./components/GoogleConnections";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export default function SettingsPage() {
   const [offset, setOffset] = useState("");
@@ -112,29 +115,64 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account, connections, and content generation settings.
+        </p>
+      </div>
 
-      <GoogleConnections
-        connections={connections}
-        handleDisconnect={handleDisconnect}
-      />
-
-      <BotConfiguration
-        offset={offset}
-        setOffset={setOffset}
-        handleSubmit={handleSaveOffset}
-        message={message}
-      />
-
-      <SocialConnections
-        connections={connections}
-        handleDisconnect={handleDisconnect}
-      />
-
-      <Automations
-        automations={automations}
-        handleAddAutomation={handleAddAutomation}
-      />
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="connections">Connections</TabsTrigger>
+          <TabsTrigger value="automations">Automations</TabsTrigger>
+        </TabsList>
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>General Settings</CardTitle>
+              <CardDescription>
+                Configure general application and bot behavior.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BotConfiguration
+                offset={offset}
+                setOffset={setOffset}
+                handleSubmit={handleSaveOffset}
+                message={message}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="connections">
+          <Card>
+            <CardHeader>
+              <CardTitle>Connections</CardTitle>
+              <CardDescription>
+                Manage your connected Google and social media accounts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <GoogleConnections
+                connections={connections}
+                handleDisconnect={handleDisconnect}
+              />
+              <SocialConnections
+                connections={connections}
+                handleDisconnect={handleDisconnect}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="automations">
+          <Automations
+            automations={automations}
+            handleAddAutomation={handleAddAutomation}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
