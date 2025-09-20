@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Automation } from "@prisma/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Icon } from "@iconify/react";
 
 interface PostGeneratorFormProps {
   automations: Automation[];
@@ -46,8 +48,13 @@ export function PostGeneratorForm({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Generate Social Media Post</Button>
+      <DialogTrigger asChild className="mt-4">
+        <Card className="cursor-pointer transition-colors hover:bg-muted/30">
+          <CardContent className="flex items-center justify-center px-6 gap-2">
+            <Icon icon="lucide:plus" className="size-4" />
+            <span>Generate Social Media Post</span>
+          </CardContent>
+        </Card>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
