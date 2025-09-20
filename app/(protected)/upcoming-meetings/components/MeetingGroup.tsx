@@ -7,10 +7,12 @@ export function MeetingGroup({
   date,
   events,
   onToggleChange,
+  isOperating,
 }: {
   date: string;
   events: EnrichedCalendarEvent[];
   onToggleChange: Function;
+  isOperating: boolean;
 }) {
   return (
     <div>
@@ -23,6 +25,7 @@ export function MeetingGroup({
             key={event.id}
             event={event}
             onToggleChange={onToggleChange}
+            isOperating={isOperating}
           />
         ))}
       </div>

@@ -10,9 +10,11 @@ import { AttendeeAvatars } from "./AttendeeAvatars";
 export function MeetingCard({
   event,
   onToggleChange,
+  isOperating,
 }: {
   event: EnrichedCalendarEvent;
   onToggleChange: Function;
+  isOperating: boolean;
 }) {
   const meetingInfo = getMeetingInfo(event);
   const isRecordable = !!meetingInfo;
@@ -66,7 +68,7 @@ export function MeetingCard({
         </Label>
         <Switch
           id={`record-${event.id}`}
-          disabled={!isRecordable}
+          disabled={isOperating || !isRecordable}
           defaultChecked={event.isRecordingEnabled}
           onCheckedChange={(isChecked) =>
             onToggleChange(event, isChecked, meetingInfo)

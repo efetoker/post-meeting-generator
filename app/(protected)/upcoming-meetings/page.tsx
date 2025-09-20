@@ -8,17 +8,19 @@ import { LoadingSkeleton } from "./components/LoadingSkeleton";
 import { ErrorState } from "./components/ErrorState";
 import { EmptyState } from "./components/EmptyState";
 import { MeetingGroup } from "./components/MeetingGroup";
-
+import { getMeetingInfo } from "@/lib/utils";
+import { toast } from "react-hot-toast";
 export interface EnrichedCalendarEvent extends CalendarEvent {
   isRecordingEnabled: boolean;
   sourceAccountId: string;
   sourceAccountEmail: string | null;
 }
 
-export default function DashboardPage() {
+export default function UpcomingMeetingsPage() {
   const [events, setEvents] = useState<EnrichedCalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOperating, setIsOperating] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -47,38 +49,57 @@ export default function DashboardPage() {
   }, []);
 
   const handleToggleChange = async (
-    event: CalendarEvent,
-    isChecked: boolean,
-    meetingInfo: { link: string; platform: string } | null
+    event: EnrichedCalendarEvent,
+    isChecked: boolean
   ) => {
-    if (!meetingInfo) return;
+    const meetingInfo = getMeetingInfo(event);
 
-    if (isChecked) {
-      if (!meetingInfo) return;
-      try {
-        await fetch("/api/meetings/toggle", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event, isEnabled: true, ...meetingInfo }),
-        });
-        // TODO: Add success feedback to the user
-      } catch (error) {
-        console.error("Failed to enable recording:", error);
-        // TODO: Add error feedback to the user
-      }
-    } else {
-      try {
-        await fetch("/api/meetings/cancel", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ googleEventId: event.id }),
-        });
-        // TODO: Add success feedback to the user
-      } catch (error) {
-        console.error("Failed to cancel recording:", error);
-        // TODO: Add error feedback to the user
-      }
+    if (!meetingInfo && isChecked) {
+      toast.error("No recordable meeting link found.");
+      return;
     }
+
+    setIsOperating(true);
+
+    const originalEvents = events;
+    setEvents((currentEvents) =>
+      currentEvents.map((e) =>
+        e.id === event.id ? { ...e, isRecordingEnabled: isChecked } : e
+      )
+    );
+
+    const apiEndpoint = isChecked
+      ? "/api/meetings/toggle"
+      : "/api/meetings/cancel";
+    const body = isChecked
+      ? { event, isEnabled: true, ...meetingInfo }
+      : { googleEventId: event.id };
+
+    const promise = fetch(apiEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error("Action failed. Please try again.");
+      }
+      return res.json();
+    });
+
+    toast
+      .promise(promise, {
+        loading: isChecked ? "Enabling recording..." : "Disabling recording...",
+        success: `Recording ${
+          isChecked ? "enabled" : "disabled"
+        } successfully!`,
+        error: (err) => {
+          setEvents(originalEvents);
+          return err.toString();
+        },
+      })
+      .finally(() => {
+        setIsOperating(false);
+      });
   };
 
   const groupEventsByDate = (events: EnrichedCalendarEvent[]) => {
@@ -142,6 +163,7 @@ export default function DashboardPage() {
             date={date}
             events={dateEvents}
             onToggleChange={handleToggleChange}
+            isOperating={isOperating}
           />
         ))}
       </div>
