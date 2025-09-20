@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
+import toast from "react-hot-toast";
 
 interface SocialPostCardProps {
   post: SocialPost;
@@ -51,6 +51,7 @@ export function SocialPostCard({
 
   const handleCopy = () => {
     navigator.clipboard.writeText(post.content);
+    toast.success("Post copied to clipboard!");
   };
 
   const formattedDate = new Date(post.createdAt).toLocaleDateString("en-US", {
@@ -90,18 +91,21 @@ export function SocialPostCard({
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Textarea
-              className="min-h-48"
-              value={post.content}
-              readOnly
-              rows={10}
-            />
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
+              {post.content}
+            </pre>
           </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between sm:space-x-0">
             <div className="flex justify-start gap-2">
+              <Button variant="outline" onClick={handleCopy}>
+                <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
+                Copy
+              </Button>
+            </div>
+            <div className="flex justify-end gap-2">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" className="w-full sm:w-auto">
+                  <Button variant="destructive" className="w-full sm:w-auto">
                     Remove from Database
                   </Button>
                 </AlertDialogTrigger>
@@ -128,12 +132,6 @@ export function SocialPostCard({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleCopy}>
-                <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
-                Copy
-              </Button>
             </div>
           </DialogFooter>
         </DialogContent>
