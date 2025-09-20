@@ -44,9 +44,15 @@ export async function POST(request: Request) {
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
+    const [pageId, fbPostId] = data.id.split("_");
+    const postPublicUrl = `https://www.facebook.com/permalink.php?story_fbid=${fbPostId}&id=${pageId}`;
+
     await prisma.socialPost.update({
       where: { id: postId },
-      data: { status: "PUBLISHED" },
+      data: {
+        status: "PUBLISHED",
+        publicUrl: postPublicUrl,
+      },
     });
 
     return NextResponse.json({
