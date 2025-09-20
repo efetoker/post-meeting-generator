@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 interface SocialPostCardProps {
   post: SocialPost;
@@ -75,7 +76,17 @@ export function SocialPostCard({
         <CardContent className="flex items-center gap-4 p-4">
           <PlatformIcon platform={post.platform} />
           <div className="flex-1">
-            <div className="text-sm font-semibold">{post.platform} Post</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">
+                {post.platform} Post
+              </span>
+              {post.status === "PUBLISHED" && (
+                <Icon
+                  icon="lucide:check-circle"
+                  className="h-4 w-4 text-green-500"
+                />
+              )}
+            </div>
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {post.content}
             </p>
@@ -115,6 +126,17 @@ export function SocialPostCard({
                 <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
                 Copy
               </Button>
+              {post.publicUrl && (
+                <Button asChild>
+                  <Link href={post.publicUrl} target="_blank">
+                    <Icon
+                      icon="lucide:external-link"
+                      className="mr-2 h-4 w-4"
+                    />
+                    View Post
+                  </Link>
+                </Button>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <AlertDialog>
