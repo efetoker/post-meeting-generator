@@ -6,14 +6,6 @@ import { Account, Automation } from "@prisma/client";
 import { BotConfiguration } from "@/app/settings/components/BotConfiguration";
 import { SocialConnections } from "@/app/settings/components/SocialConnections";
 import { Automations } from "@/app/settings/components/Automations";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { GoogleConnections } from "./components/GoogleConnections";
 
 export default function SettingsPage() {
