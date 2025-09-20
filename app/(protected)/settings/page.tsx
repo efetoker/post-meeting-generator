@@ -3,9 +3,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Account, Automation } from "@prisma/client";
-import { BotConfiguration } from "@/app/settings/components/BotConfiguration";
-import { SocialConnections } from "@/app/settings/components/SocialConnections";
-import { Automations } from "@/app/settings/components/Automations";
+import { BotConfiguration } from "@/app/(protected)/settings/components/BotConfiguration";
+import { SocialConnections } from "@/app/(protected)/settings/components/SocialConnections";
+import { Automations } from "@/app/(protected)/settings/components/Automations";
 import { GoogleConnections } from "./components/GoogleConnections";
 
 export default function SettingsPage() {
