@@ -21,9 +21,11 @@ export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
     if (transcript && !generatedEmail && !isGenerating) {
       handleGenerateEmail();
     }
-  }, [transcript, isGenerating]);
+  }, [transcript]);
 
   const handleGenerateEmail = async () => {
+    if (isGenerating) return;
+
     setIsGenerating(true);
     setGeneratedEmail("");
     const promise = fetch("/api/generate/email", {
@@ -87,11 +89,15 @@ export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
       )}
 
       <div className="mt-4 flex gap-2 justify-between">
-        <Button variant="outline" onClick={handleCopy}>
+        <Button
+          variant="outline"
+          onClick={handleCopy}
+          disabled={!generatedEmail || isGenerating}
+        >
           <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
           Copy
         </Button>
-        <Button onClick={handleGenerateEmail}>
+        <Button onClick={handleGenerateEmail} disabled={isGenerating}>
           <Icon icon="lucide:refresh-cw" className="mr-2 h-4 w-4" />
           Regenerate
         </Button>
