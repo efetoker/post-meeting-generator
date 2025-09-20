@@ -3,19 +3,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { getMeetingInfo } from "@/lib/utils";
 import { CalendarEvent } from "@/types/calendar";
+import { LoadingSkeleton } from "./components/LoadingSkeleton";
+import { ErrorState } from "./components/ErrorState";
+import { EmptyState } from "./components/EmptyState";
+import { MeetingGroup } from "./components/MeetingGroup";
 
-interface EnrichedCalendarEvent extends CalendarEvent {
+export interface EnrichedCalendarEvent extends CalendarEvent {
   isRecordingEnabled: boolean;
   sourceAccountId: string;
   sourceAccountEmail: string | null;
@@ -87,93 +81,69 @@ export default function DashboardPage() {
     }
   };
 
-  const formatDateTime = (dateTime?: string, date?: string) => {
-    if (dateTime) {
-      return new Date(dateTime).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      });
-    }
-    if (date) {
-      return new Date(date).toLocaleString(undefined, {
-        dateStyle: "medium",
-      });
-    }
-    return "No time specified";
+  const groupEventsByDate = (events: EnrichedCalendarEvent[]) => {
+    const grouped = new Map<string, EnrichedCalendarEvent[]>();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const today = now.toLocaleDateString();
+    const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString();
+
+    events.forEach((event) => {
+      const eventDate = new Date(event.start.dateTime || event.start.date!);
+      const eventDateString = eventDate.toLocaleDateString();
+
+      const formattingOptions: Intl.DateTimeFormatOptions = {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      };
+
+      if (eventDate.getFullYear() !== currentYear) {
+        formattingOptions.year = "numeric";
+      }
+
+      let dayLabel = eventDate.toLocaleDateString(undefined, formattingOptions);
+
+      if (eventDateString === today) {
+        dayLabel = "Today";
+      } else if (eventDateString === tomorrow) {
+        dayLabel = "Tomorrow";
+      }
+
+      if (!grouped.has(dayLabel)) {
+        grouped.set(dayLabel, []);
+      }
+      grouped.get(dayLabel)!.push(event);
+    });
+    return grouped;
   };
 
   if (isLoading) {
-    return <div className="p-8">Loading upcoming meetings...</div>;
+    return <LoadingSkeleton />;
   }
 
   if (error) {
-    return <div className="p-8 text-red-500">Error: {error}</div>;
+    return <ErrorState message={error} />;
   }
+
+  if (events.length === 0) {
+    return <EmptyState />;
+  }
+
+  const groupedEvents = groupEventsByDate(events);
 
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-6">Upcoming Meetings</h1>
-      <div className="space-y-4">
-        {events.length > 0 ? (
-          events.map((event) => {
-            const meetingInfo = getMeetingInfo(event);
-            const isRecordable = !!meetingInfo;
-
-            return (
-              <Card
-                key={event.id}
-                className={!isRecordable ? "bg-muted/50" : ""}
-              >
-                <CardHeader>
-                  <CardTitle>{event.summary || "No Title"}</CardTitle>
-                  <CardDescription>
-                    {formatDateTime(event.start.dateTime, event.start.date)}
-
-                    <span className="block mt-1 text-xs text-muted-foreground">
-                      From Calendar:{" "}
-                      {event.sourceAccountEmail ||
-                        `...${event.sourceAccountId.slice(-6)}`}
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold mb-2">Attendees:</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600">
-                      {event.attendees ? (
-                        event.attendees.map((attendee) => (
-                          <li key={attendee.email}>{attendee.email}</li>
-                        ))
-                      ) : (
-                        <li>Just you</li>
-                      )}
-                    </ul>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id={`record-${event.id}`}
-                      disabled={!isRecordable}
-                      defaultChecked={event.isRecordingEnabled}
-                      onCheckedChange={(isChecked) =>
-                        handleToggleChange(event, isChecked, meetingInfo)
-                      }
-                    />
-                    <Label
-                      htmlFor={`record-${event.id}`}
-                      className={!isRecordable ? "text-gray-400" : ""}
-                    >
-                      {isRecordable
-                        ? "Record meeting"
-                        : "No meeting link found"}
-                    </Label>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          <p>No upcoming meetings found.</p>
-        )}
+      <div className="space-y-8">
+        {Array.from(groupedEvents.entries()).map(([date, dateEvents]) => (
+          <MeetingGroup
+            key={date}
+            date={date}
+            events={dateEvents}
+            onToggleChange={handleToggleChange}
+          />
+        ))}
       </div>
     </div>
   );
