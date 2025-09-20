@@ -29,6 +29,12 @@ import {
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SocialPostCardProps {
   post: SocialPost;
@@ -68,9 +74,9 @@ export function SocialPostCard({
   });
 
   return (
-    <>
+    <TooltipProvider>
       <Card
-        className="cursor-pointer transition-colors hover:bg-muted/30 py-0"
+        className="group relative cursor-pointer transition-colors hover:bg-muted/30 py-0"
         onClick={() => setIsDialogOpen(true)}
       >
         <CardContent className="flex items-center gap-4 p-4">
@@ -91,9 +97,77 @@ export function SocialPostCard({
               {post.content}
             </p>
           </div>
-          <span className="shrink-0 text-sm text-muted-foreground">
-            {formattedDate}
-          </span>
+          <div className="relative flex items-center justify-end w-24 text-right">
+            <span className="shrink-0 text-sm text-muted-foreground transition-opacity group-hover:opacity-0">
+              {formattedDate}
+            </span>
+
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {post.publicUrl && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={post.publicUrl}
+                      target="_blank"
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "icon" })
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Icon icon="lucide:external-link" className="h-4 w-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View Live Post</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <AlertDialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isOperating}
+                      >
+                        <Icon
+                          icon="lucide:trash-2"
+                          className="h-4 w-4 text-destructive"
+                        />
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete</p>
+                  </TooltipContent>
+                </Tooltip>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete this post from your
+                      database and cannot be undone. Please remember to delete
+                      the post from the published platform (e.g., LinkedIn or
+                      Facebook) yourself, as this action will only remove it
+                      from the database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAndClose}
+                      disabled={isOperating}
+                      className={cn(buttonVariants({ variant: "destructive" }))}
+                    >
+                      Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -172,6 +246,6 @@ export function SocialPostCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 }
