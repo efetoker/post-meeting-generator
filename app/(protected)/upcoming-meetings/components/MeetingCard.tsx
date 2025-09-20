@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { EnrichedCalendarEvent } from "../page";
 import { getMeetingInfo } from "@/lib/utils";
 import { AttendeeAvatars } from "./AttendeeAvatars";
+import { Status, StatusBadge } from "./StatusBadge";
 
 export function MeetingCard({
   event,
@@ -51,7 +52,10 @@ export function MeetingCard({
         </div>
       </div>
       <div className="flex-1 border-l pl-4">
-        <h3 className="font-semibold">{event.summary || "No Title"}</h3>
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-semibold">{event.summary || "No Title"}</h3>
+          <StatusBadge status={event.status as Status} />
+        </div>
         {showAccountEmail && (
           <p className="text-sm text-muted-foreground">
             From: {event.sourceAccountEmail}
@@ -72,7 +76,9 @@ export function MeetingCard({
         </Label>
         <Switch
           id={`record-${event.id}`}
-          disabled={isOperating || !isRecordable}
+          disabled={
+            isOperating || !isRecordable || event.status !== "SCHEDULED"
+          }
           defaultChecked={event.isRecordingEnabled}
           onCheckedChange={(isChecked) => onToggleChange(event, isChecked)}
         />
