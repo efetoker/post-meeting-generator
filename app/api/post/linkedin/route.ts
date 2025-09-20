@@ -22,10 +22,7 @@ export async function POST(request: Request) {
     }
 
     const linkedInAccount = await prisma.account.findFirst({
-      where: {
-        userId: session.user.id,
-        provider: "linkedin",
-      },
+      where: { userId: session.user.id, provider: "linkedin" },
     });
 
     if (!linkedInAccount?.access_token || !linkedInAccount.providerAccountId) {
@@ -38,39 +35,47 @@ export async function POST(request: Request) {
     const accessToken = linkedInAccount.access_token;
     const linkedInPersonId = linkedInAccount.providerAccountId;
 
-    const response = await fetch("https://api.linkedin.com/v2/ugcPosts", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-Restli-Protocol-Version": "2.0.0", // Required by LinkedIn API
-      },
-      body: JSON.stringify({
-        author: `urn:li:person:${linkedInPersonId}`,
-        lifecycleState: "PUBLISHED",
-        specificContent: {
-          "com.linkedin.ugc.ShareContent": {
-            shareCommentary: {
-              text: content,
+    const createPostResponse = await fetch(
+      "https://api.linkedin.com/v2/ugcPosts",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "X-Restli-Protocol-Version": "2.0.0",
+        },
+        body: JSON.stringify({
+          author: `urn:li:person:${linkedInPersonId}`,
+          lifecycleState: "PUBLISHED",
+          specificContent: {
+            "com.linkedin.ugc.ShareContent": {
+              shareCommentary: { text: content },
+              shareMediaCategory: "NONE",
             },
-            shareMediaCategory: "NONE",
           },
-        },
-        visibility: {
-          "com.linkedin.ugc.MemberNetworkVisibility": "CONNECTIONS", // Or PUBLIC
-        },
-      }),
-    });
+          visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+        }),
+      }
+    );
 
-    if (!response.ok) {
-      const errorBody = await response.json();
-      console.error("LinkedIn API Error:", errorBody);
-      throw new Error("Failed to post to LinkedIn.");
+    if (!createPostResponse.ok) {
+      const errorBody = await createPostResponse.json();
+      throw new Error(errorBody.message || "Failed to create LinkedIn post.");
     }
+
+    const responseData = await createPostResponse.json();
+    const activityUrn = responseData.id;
+
+    const publicUrl = activityUrn
+      ? `https://www.linkedin.com/feed/update/${activityUrn}/`
+      : null;
 
     await prisma.socialPost.update({
       where: { id: postId },
-      data: { status: "PUBLISHED" },
+      data: {
+        status: "PUBLISHED",
+        publicUrl: publicUrl,
+      },
     });
 
     return NextResponse.json({
