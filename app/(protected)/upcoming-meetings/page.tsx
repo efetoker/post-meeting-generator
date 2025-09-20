@@ -233,10 +233,7 @@ export default function UpcomingMeetingsPage() {
             View your upcoming calendar events and manage recording settings.
           </p>
         </div>
-        <Button
-          onClick={handleRefresh}
-          disabled={isRefreshing || isLoading}
-        >
+        <Button onClick={handleRefresh} disabled={isRefreshing || isLoading}>
           <Icon
             icon="lucide:refresh-cw"
             className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -259,10 +256,13 @@ export default function UpcomingMeetingsPage() {
       {nextPageToken && (
         <div className="mt-8 text-center">
           <Button
-            variant="outline"
             onClick={handleLoadMore}
             disabled={isFetchingMore || isRefreshing}
           >
+            <Icon
+              icon="lucide:loader"
+              className={`mr-2 h-4 w-4 ${isFetchingMore ? "animate-spin" : ""}`}
+            />
             {isFetchingMore ? "Loading..." : "Load More"}
           </Button>
         </div>
