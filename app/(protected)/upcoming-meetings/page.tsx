@@ -259,10 +259,14 @@ export default function UpcomingMeetingsPage() {
             onClick={handleLoadMore}
             disabled={isFetchingMore || isRefreshing}
           >
-            <Icon
-              icon="lucide:loader"
-              className={`mr-2 h-4 w-4 ${isFetchingMore ? "animate-spin" : ""}`}
-            />
+            {isFetchingMore ? (
+              <Icon
+                icon="lucide:loader-2"
+                className="mr-2 h-4 w-4 animate-spin"
+              />
+            ) : (
+              <Icon icon="lucide:arrow-down" className="mr-2 h-4 w-4" />
+            )}
             {isFetchingMore ? "Loading..." : "Load More"}
           </Button>
         </div>
