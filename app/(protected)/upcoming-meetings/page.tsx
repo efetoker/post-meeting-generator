@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx
+// app/(protected)/upcoming-meetings/page.tsx
 
 "use client";
 
