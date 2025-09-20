@@ -22,7 +22,6 @@ export async function GET() {
         recordingEnabled: true,
         recallBotId: { not: null },
         status: { in: ["SCHEDULED", "TRANSCRIBING"] },
-        startTime: { lt: new Date() },
       },
     });
 
@@ -53,19 +52,17 @@ export async function GET() {
 
       const botData = await botStatusResponse.json();
 
-      if (
-        meeting.status === "SCHEDULED" &&
-        botData.recordings?.length > 0 &&
-        botData.recordings[0].status?.code === "done"
-      ) {
+      const recording = botData.recordings?.find(
+        (r: any) => r.status?.code === "done"
+      );
+
+      if (meeting.status === "SCHEDULED" && recording) {
         console.log(
           `Recording found for bot ${botData.id}. Starting transcription job.`
         );
 
-        const recordingId = botData.recordings[0].id;
-
         await fetch(
-          `https://us-west-2.recall.ai/api/v1/recording/${recordingId}/create_transcript/`,
+          `https://us-west-2.recall.ai/api/v1/recording/${recording.id}/create_transcript/`,
           {
             method: "POST",
             headers: {
@@ -84,8 +81,8 @@ export async function GET() {
         });
       }
 
-      const transcriptInfo =
-        botData.recordings?.[0]?.media_shortcuts?.transcript;
+      const transcriptInfo = recording?.media_shortcuts?.transcript;
+
       if (transcriptInfo?.status?.code === "done") {
         console.log(
           `Transcript ready for bot: ${botData.id}. Downloading and updating database.`
