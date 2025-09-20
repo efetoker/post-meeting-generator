@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Account } from "@prisma/client";
 import { Icon } from "@iconify/react";
+import { toast } from "react-hot-toast";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -58,7 +59,6 @@ export function SocialConnections({
 }: SocialConnectionsProps) {
   const [pages, setPages] = useState<FacebookPage[]>([]);
   const [isLoadingPages, setIsLoadingPages] = useState(false);
-  const [pageSelectionMessage, setPageSelectionMessage] = useState("");
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -88,7 +88,7 @@ export function SocialConnections({
             setSelectedPageId(settingsData.defaultFacebookPageId);
           }
         } catch (error) {
-          setPageSelectionMessage("Failed to load your pages.");
+          toast.error("Failed to load your Facebook pages.");
         } finally {
           setIsLoadingPages(false);
         }
@@ -101,26 +101,29 @@ export function SocialConnections({
     pageId: string | null,
     pageAccessToken: string | null
   ) => {
-    setPageSelectionMessage("Saving...");
-    try {
-      const response = await fetch("/api/settings/facebook-page", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageId, pageAccessToken }),
-      });
-      if (!response.ok) throw new Error("Save failed");
-
+    const promise = fetch("/api/settings/facebook-page", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId, pageAccessToken }),
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to save selection.");
+      }
       setSelectedPageId(pageId);
-      setPageSelectionMessage(
-        pageId ? "Default page saved." : "Default page cleared."
-      );
-    } catch (error) {
-      setPageSelectionMessage("An error occurred.");
-    }
-    setTimeout(() => setPageSelectionMessage(""), 2000);
+      return res.json();
+    });
+
+    toast.promise(promise, {
+      loading: "Saving selection...",
+      success: pageId ? "Default page saved." : "Default page cleared.",
+      error: (err) => err.toString(),
+    });
   };
 
-  const handlePageSelect = (pageId: string) => {
+  const handlePageSelect = (pageId: string | null) => {
+    if (pageId === null) {
+      savePageSelection(null, null);
+    }
     const selectedPage = pages.find((p) => p.id === pageId);
     if (selectedPage) {
       savePageSelection(selectedPage.id, selectedPage.access_token);
@@ -148,131 +151,136 @@ export function SocialConnections({
 
   return (
     <>
-    <Card>
-      <CardHeader>
-        <CardTitle>Social Media Connections</CardTitle>
-        <CardDescription>
-          Connect your social media accounts to post content directly.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Icon icon="logos:linkedin-icon" className="h-6 w-6" />
-              <span className="text-lg font-semibold">LinkedIn</span>
-            </div>
-            {linkedInAccount ? (
-              <div className="flex items-center gap-4">
-                <ConnectionStatus text="Connected" color="bg-green-500" />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() =>
-                    openConfirmationDialog(
-                      "linkedin",
-                      linkedInAccount.providerAccountId
-                    )
-                  }
-                >
-                  Disconnect
-                </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Social Media Connections</CardTitle>
+          <CardDescription>
+            Connect your social media accounts to post content directly.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Icon icon="logos:linkedin-icon" className="h-6 w-6" />
+                <span className="text-lg font-semibold">LinkedIn</span>
               </div>
-            ) : (
-              <Button onClick={() => signIn("linkedin")}>Connect</Button>
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Icon icon="logos:facebook" className="h-6 w-6" />
-              <span className="text-lg font-semibold">Facebook</span>
-            </div>
-            {facebookAccount ? (
-              <div className="flex items-center gap-4">
-                <ConnectionStatus text="Connected" color="bg-green-500" />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() =>
-                    openConfirmationDialog(
-                      "facebook",
-                      facebookAccount.providerAccountId
-                    )
-                  }
-                >
-                  Disconnect
-                </Button>
-              </div>
-            ) : (
-              <Button onClick={() => signIn("facebook")}>Connect</Button>
-            )}
-          </div>
-
-          {facebookAccount && (
-            <div className="mt-4 border-t pt-4">
-              <label className="text-sm font-medium block mb-2">
-                Default Page for Posts
-              </label>
-              {isLoadingPages ? (
-                <p className="text-sm text-muted-foreground">
-                  Loading pages...
-                </p>
-              ) : (
-                <div className="max-w-sm">
-                  <Select
-                    onValueChange={handlePageSelect}
-                    value={selectedPageId || ""}
+              {linkedInAccount ? (
+                <div className="flex items-center gap-4">
+                  <ConnectionStatus text="Connected" color="bg-green-500" />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() =>
+                      openConfirmationDialog(
+                        "linkedin",
+                        linkedInAccount.providerAccountId
+                      )
+                    }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a Facebook Page..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pages.map((page) => (
-                        <SelectItem key={page.id} value={page.id}>
-                          {page.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {pageSelectionMessage && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {pageSelectionMessage}
-                    </p>
-                  )}
+                    Disconnect
+                  </Button>
                 </div>
+              ) : (
+                <Button onClick={() => signIn("linkedin")}>Connect</Button>
               )}
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
 
-    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will disconnect your{" "}
-            <strong className="capitalize text-foreground">
-              {accountToDisconnect?.provider}
-            </strong>{" "}
-            account. You will need to reconnect it to post content.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirmDisconnect}
-            className={cn(buttonVariants({ variant: "destructive" }))}
-          >
-            Disconnect
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Icon icon="logos:facebook" className="h-6 w-6" />
+                <span className="text-lg font-semibold">Facebook</span>
+              </div>
+              {facebookAccount ? (
+                <div className="flex items-center gap-4">
+                  <ConnectionStatus text="Connected" color="bg-green-500" />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() =>
+                      openConfirmationDialog(
+                        "facebook",
+                        facebookAccount.providerAccountId
+                      )
+                    }
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => signIn("facebook")}>Connect</Button>
+              )}
+            </div>
+
+            {facebookAccount && (
+              <div className="mt-4 border-t pt-4">
+                <label className="text-sm font-medium block mb-2">
+                  Default Page for Posts
+                </label>
+                {isLoadingPages ? (
+                  // TODO: Better loading
+                  <p className="text-sm text-muted-foreground">
+                    Loading pages...
+                  </p>
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <Select
+                      onValueChange={handlePageSelect}
+                      value={selectedPageId || ""}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a Facebook Page..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pages.map((page) => (
+                          <SelectItem key={page.id} value={page.id}>
+                            {page.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedPageId && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handlePageSelect(null)}
+                      >
+                        <Icon icon="lucide:x" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will disconnect your{" "}
+              <strong className="capitalize text-foreground">
+                {accountToDisconnect?.provider}
+              </strong>{" "}
+              account. You will need to reconnect it to post content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDisconnect}
+              className={cn(buttonVariants({ variant: "destructive" }))}
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
