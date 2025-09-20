@@ -18,9 +18,9 @@ export async function GET() {
 
     if (googleAccounts.length === 0) return NextResponse.json([]);
 
-    let allEvents: any[] = [];
+    const allEvents: any[] = [];
 
-    for (let account of googleAccounts) {
+    for (const account of googleAccounts) {
       let accessToken = account.access_token;
 
       if (
