@@ -123,7 +123,7 @@ export default function MeetingDetailPage() {
           <PlatformIcon platform={meeting.platform} />
           <h1 className="text-3xl font-bold">{meeting.title}</h1>
         </div>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-2">
           {new Date(meeting.startTime).toLocaleString()}
         </p>
       </div>
