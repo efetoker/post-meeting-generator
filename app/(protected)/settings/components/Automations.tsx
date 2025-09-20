@@ -178,17 +178,11 @@ export function Automations({ automations, setAutomations }: AutomationsProps) {
   return (
     <>
       <Card>
-        <CardHeader className="flex-row items-start justify-between">
-          <div>
-            <CardTitle>Automations</CardTitle>
-            <CardDescription>
-              Configure custom prompts to generate social media posts.
-            </CardDescription>
-          </div>
-          <Button onClick={() => handleOpenDialog()}>
-            <Icon icon="lucide:plus" className="mr-2 h-4 w-4" />
-            Add Automation
-          </Button>
+        <CardHeader>
+          <CardTitle>Automations</CardTitle>
+          <CardDescription>
+            Configure custom prompts to generate social media posts.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {automations.length === 0 ? (
@@ -202,41 +196,52 @@ export function Automations({ automations, setAutomations }: AutomationsProps) {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {automations.map((auto) => (
-                <div
-                  key={auto.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <PlatformIcon platform={auto.platform} />
-                    <div>
-                      <p className="font-semibold">{auto.name}</p>
+            <div>
+              <div className="mb-4 flex justify-end">
+                <Button onClick={() => handleOpenDialog()}>
+                  <Icon icon="lucide:plus" className="mr-2 h-4 w-4" />
+                  Add Automation
+                </Button>
+              </div>
+
+              <div className="grid gap-4">
+                {automations.map((auto) => (
+                  <div
+                    key={auto.id}
+                    className="flex items-center justify-between rounded-lg border p-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <PlatformIcon platform={auto.platform} />
+                      <div>
+                        <p className="font-semibold">{auto.name}</p>
+                      </div>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Icon
+                            icon="lucide:more-horizontal"
+                            className="h-4 w-4"
+                          />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleOpenDialog(auto)}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setAutomationToDelete(auto)}
+                          className="text-red-600"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Icon
-                          icon="lucide:more-horizontal"
-                          className="h-4 w-4"
-                        />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleOpenDialog(auto)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setAutomationToDelete(auto)}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
