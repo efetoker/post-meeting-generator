@@ -9,6 +9,15 @@ import { Automation, SocialPost } from "@prisma/client";
 import toast from "react-hot-toast";
 import { Icon } from "@iconify/react";
 import { PostGeneratorForm } from "./PostGeneratorForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
@@ -28,9 +37,15 @@ export function GeneratedSocialPosts({
 }: GeneratedSocialPostsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPosting, setIsPosting] = useState<string | null>(null);
+  const [generatedPostInDialog, setGeneratedPostInDialog] =
+    useState<SocialPost | null>(null);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
   const handleGeneratePost = async (automationId: string) => {
     setIsGenerating(true);
+    setIsPostDialogOpen(true);
+    setGeneratedPostInDialog(null);
+
     const promise = fetch("/api/generate/social-post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,13 +66,7 @@ export function GeneratedSocialPosts({
       .promise(promise, {
         loading: "Generating social post...",
         success: (newPost) => {
-          setGeneratedPosts((prev) =>
-            [...prev, newPost].sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            )
-          );
+          setGeneratedPostInDialog(newPost);
           return "Post generated successfully!";
         },
         error: (err) => err.toString(),
@@ -106,6 +115,7 @@ export function GeneratedSocialPosts({
               p.id === post.id ? { ...p, status: "PUBLISHED" } : p
             )
           );
+          setIsPostDialogOpen(false);
           return "Posted successfully!";
         },
         error: (err) => err.toString(),
@@ -139,7 +149,58 @@ export function GeneratedSocialPosts({
         onGenerate={handleGeneratePost}
         isGenerating={isGenerating}
       />
-
+      <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Review Your Post</DialogTitle>
+            <DialogDescription>
+              Review and either copy or post the generated content.
+            </DialogDescription>
+          </DialogHeader>
+          {isGenerating ? (
+            <div className="space-y-4 py-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ) : (
+            generatedPostInDialog && (
+              <div className="py-4">
+                <Card>
+                  <CardContent className="px-6">
+                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                      {generatedPostInDialog.content}
+                    </pre>
+                  </CardContent>
+                </Card>
+              </div>
+            )
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleCopy(generatedPostInDialog?.content || "")}
+              disabled={isGenerating || !generatedPostInDialog}
+            >
+              <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
+              Copy
+            </Button>
+            <Button
+              onClick={() =>
+                generatedPostInDialog && handlePost(generatedPostInDialog)
+              }
+              disabled={isGenerating || isPosting === generatedPostInDialog?.id}
+            >
+              {isPosting === generatedPostInDialog?.id
+                ? "Posting..."
+                : generatedPostInDialog &&
+                  generatedPostInDialog?.platform !== undefined
+                ? `Post to ${generatedPostInDialog?.platform}`
+                : `Post`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="space-y-6 mt-4">
         {generatedPosts.map((post) => (
           <div key={post.id}>
@@ -187,7 +248,9 @@ export function GeneratedSocialPosts({
                     >
                       {isPosting === post.id
                         ? "Posting..."
-                        : `Post to ${post.platform}`}
+                        : post && post.platform !== undefined
+                        ? `Post to ${post.platform}`
+                        : "Post"}
                     </Button>
                   )}
                 </div>
