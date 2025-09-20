@@ -35,6 +35,12 @@ export default function MeetingDetailPage() {
     if (!id) return;
     const fetchPageData = async () => {
       try {
+        try {
+          await fetch(`/api/meetings/${id}/posts/draft`, {
+            method: "DELETE",
+          });
+        } catch (error) {}
+
         const [meetingRes, automationsRes, postsRes] = await Promise.all([
           fetch(`/api/meetings/${id}`),
           fetch("/api/automations"),
