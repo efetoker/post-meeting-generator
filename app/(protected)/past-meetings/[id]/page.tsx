@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Meeting } from "@prisma/client";
+import { Meeting, Automation, SocialPost } from "@prisma/client";
 import {
   Card,
   CardContent,
@@ -27,24 +27,41 @@ export default function MeetingDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [generatedEmail, setGeneratedEmail] = useState("");
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [generatedPosts, setGeneratedPosts] = useState<SocialPost[]>([]);
+  const [isLoadingSocial, setIsLoadingSocial] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    const fetchMeeting = async () => {
+    const fetchPageData = async () => {
       try {
-        const response = await fetch(`/api/meetings/${id}`);
-        if (!response.ok) throw new Error("Meeting not found.");
-        const data = await response.json();
-        setMeeting(data);
+        const [meetingRes, automationsRes, postsRes] = await Promise.all([
+          fetch(`/api/meetings/${id}`),
+          fetch("/api/automations"),
+          fetch(`/api/meetings/${id}/posts`),
+        ]);
+
+        if (!meetingRes.ok) throw new Error("Meeting not found.");
+        const meetingData = await meetingRes.json();
+        setMeeting(meetingData);
+
+        if (!automationsRes.ok) throw new Error("Failed to load automations.");
+        const automationsData = await automationsRes.json();
+        setAutomations(automationsData);
+
+        if (postsRes.ok) {
+          const postsData = await postsRes.json();
+          setGeneratedPosts(postsData);
+        }
       } catch (error) {
         console.error(error);
-        toast.error("Failed to load meeting details.");
+        toast.error("Failed to load page data.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMeeting();
+    fetchPageData();
   }, [id]);
 
   if (isLoading) {
@@ -142,6 +159,10 @@ export default function MeetingDetailPage() {
                 <GeneratedSocialPosts
                   meetingId={id}
                   transcript={cleanTranscript}
+                  automations={automations}
+                  setAutomations={setAutomations}
+                  generatedPosts={generatedPosts}
+                  setGeneratedPosts={setGeneratedPosts}
                 />
               </TabsContent>
             </Tabs>
