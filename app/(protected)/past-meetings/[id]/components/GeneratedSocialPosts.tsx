@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
@@ -40,11 +41,13 @@ export function GeneratedSocialPosts({
   const [generatedPostInDialog, setGeneratedPostInDialog] =
     useState<SocialPost | null>(null);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [editableContent, setEditableContent] = useState("");
 
   const handleGeneratePost = async (automationId: string) => {
     setIsGenerating(true);
     setIsPostDialogOpen(true);
     setGeneratedPostInDialog(null);
+    setEditableContent("");
 
     const promise = fetch("/api/generate/social-post", {
       method: "POST",
@@ -67,6 +70,7 @@ export function GeneratedSocialPosts({
         loading: "Generating social post...",
         success: (newPost) => {
           setGeneratedPostInDialog(newPost);
+          setEditableContent(newPost.content);
           return "Post generated successfully!";
         },
         error: (err) => err.toString(),
@@ -76,53 +80,65 @@ export function GeneratedSocialPosts({
       });
   };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editableContent || "");
     toast.success("Post copied to clipboard!");
   };
 
   const handlePost = async (post: SocialPost) => {
-    setIsPosting(post.id);
-    let endpoint = "";
-    if (post.platform.toLowerCase() === "linkedin") {
-      endpoint = "/api/post/linkedin";
-    } else if (post.platform.toLowerCase() === "facebook") {
-      endpoint = "/api/post/facebook";
-    } else {
-      toast.error("Posting to this platform is not supported.");
-      setIsPosting(null);
+    if (!editableContent || !post.id) {
+      toast.error("No content to post.");
       return;
     }
 
-    const promise = fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: post.content, postId: post.id }),
-    }).then(async (res) => {
-      if (!res.ok) {
-        const errorData = await res.json();
+    setIsPosting(post.id);
+
+    try {
+      const updateResponse = await fetch(`/api/post/${post.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editableContent }),
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.error || "Failed to save edited post.");
+      }
+
+      let endpoint = "";
+      if (post.platform.toLowerCase() === "linkedin") {
+        endpoint = "/api/post/linkedin";
+      } else if (post.platform.toLowerCase() === "facebook") {
+        endpoint = "/api/post/facebook";
+      } else {
+        throw new Error("Posting to this platform is not supported.");
+      }
+
+      const postResponse = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editableContent, postId: post.id }),
+      });
+
+      if (!postResponse.ok) {
+        const errorData = await postResponse.json();
         throw new Error(errorData.error || "Failed to post.");
       }
-      return res.json();
-    });
 
-    toast
-      .promise(promise, {
-        loading: "Posting...",
-        success: () => {
-          setGeneratedPosts((prevPosts) =>
-            prevPosts.map((p) =>
-              p.id === post.id ? { ...p, status: "PUBLISHED" } : p
-            )
-          );
-          setIsPostDialogOpen(false);
-          return "Posted successfully!";
-        },
-        error: (err) => err.toString(),
-      })
-      .finally(() => {
-        setIsPosting(null);
-      });
+      setGeneratedPosts((prevPosts) =>
+        prevPosts.map((p) =>
+          p.id === post.id
+            ? { ...p, content: editableContent, status: "PUBLISHED" }
+            : p
+        )
+      );
+      toast.success("Posted successfully!");
+      setIsPostDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsPosting(null);
+    }
   };
 
   const handleDelete = async (postId: string) => {
@@ -166,21 +182,20 @@ export function GeneratedSocialPosts({
           ) : (
             generatedPostInDialog && (
               <div className="py-4">
-                <Card>
-                  <CardContent className="px-6">
-                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                      {generatedPostInDialog.content}
-                    </pre>
-                  </CardContent>
-                </Card>
+                <Textarea
+                  value={editableContent}
+                  onChange={(e) => setEditableContent(e.target.value)}
+                  rows={8}
+                  disabled={isGenerating || isPosting !== null}
+                />
               </div>
             )
           )}
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => handleCopy(generatedPostInDialog?.content || "")}
-              disabled={isGenerating || !generatedPostInDialog}
+              onClick={handleCopy}
+              disabled={isGenerating || !generatedPostInDialog || isPosting !== null}
             >
               <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
               Copy
@@ -193,10 +208,9 @@ export function GeneratedSocialPosts({
             >
               {isPosting === generatedPostInDialog?.id
                 ? "Posting..."
-                : generatedPostInDialog &&
-                  generatedPostInDialog?.platform !== undefined
-                ? `Post to ${generatedPostInDialog?.platform}`
-                : `Post`}
+                : generatedPostInDialog && generatedPostInDialog.platform
+                ? `Post to ${generatedPostInDialog.platform}`
+                : "Post"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -235,10 +249,7 @@ export function GeneratedSocialPosts({
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleCopy(post.content)}
-                  >
+                  <Button variant="outline" onClick={() => handleCopy}>
                     Copy
                   </Button>
                   {post.status === "DRAFT" && (
@@ -248,9 +259,7 @@ export function GeneratedSocialPosts({
                     >
                       {isPosting === post.id
                         ? "Posting..."
-                        : post && post.platform !== undefined
-                        ? `Post to ${post.platform}`
-                        : "Post"}
+                        : `Post to ${post.platform}`}
                     </Button>
                   )}
                 </div>
