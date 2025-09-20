@@ -55,6 +55,11 @@ export function SocialPostCard({
     toast.success("Post copied to clipboard!");
   };
 
+  const handleDeleteAndClose = () => {
+    onDelete(post.id);
+    setIsDialogOpen(false);
+  };
+
   const formattedDate = new Date(post.createdAt).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -132,7 +137,7 @@ export function SocialPostCard({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => onDelete(post.id)}
+                      onClick={handleDeleteAndClose}
                       disabled={isOperating}
                       className={cn(buttonVariants({ variant: "destructive" }))}
                     >
