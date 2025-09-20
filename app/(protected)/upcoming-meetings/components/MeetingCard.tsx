@@ -11,10 +11,12 @@ export function MeetingCard({
   event,
   onToggleChange,
   isOperating,
+  showAccountEmail,
 }: {
   event: EnrichedCalendarEvent;
   onToggleChange: Function;
   isOperating: boolean;
+  showAccountEmail: boolean;
 }) {
   const meetingInfo = getMeetingInfo(event);
   const isRecordable = !!meetingInfo;
@@ -50,9 +52,11 @@ export function MeetingCard({
       </div>
       <div className="flex-1 border-l pl-4">
         <h3 className="font-semibold">{event.summary || "No Title"}</h3>
-        <p className="text-sm text-muted-foreground">
-          From: {event.sourceAccountEmail}
-        </p>
+        {showAccountEmail && (
+          <p className="text-sm text-muted-foreground">
+            From: {event.sourceAccountEmail}
+          </p>
+        )}
         <AttendeeAvatars attendees={event.attendees} />
       </div>
       <div className="flex items-center space-x-3 w-40 justify-end">

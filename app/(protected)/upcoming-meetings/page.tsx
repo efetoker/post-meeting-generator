@@ -21,21 +21,37 @@ export default function UpcomingMeetingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOperating, setIsOperating] = useState(false);
+  const [showAccountEmail, setShowAccountEmail] = useState(false);
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchPageData = async () => {
       try {
-        const response = await fetch("/api/dashboard-events");
-        if (!response.ok) {
-          throw new Error("Failed to fetch calendar events.");
-        }
-        const data = await response.json();
+        const [eventsRes, connectionsRes] = await Promise.all([
+          fetch("/api/dashboard-events"),
+          fetch("/api/connections"),
+        ]);
+
+        if (!eventsRes.ok) throw new Error("Failed to fetch calendar events.");
+        if (!connectionsRes.ok) throw new Error("Failed to fetch connections.");
+
+        const eventsData = await eventsRes.json();
+        const connectionsData = await connectionsRes.json();
+
+        const googleAccounts = connectionsData.filter(
+          (acc: { provider: string }) => acc.provider === "google"
+        );
+        const hasMultipleAccounts = googleAccounts.length > 1;
+        setShowAccountEmail(hasMultipleAccounts);
 
         const now = new Date();
-        const upcomingEvents = data.filter((event: EnrichedCalendarEvent) => {
-          const eventEndTime = new Date(event.end.dateTime || event.end.date!);
-          return eventEndTime > now;
-        });
+        const upcomingEvents = eventsData.filter(
+          (event: EnrichedCalendarEvent) => {
+            const eventEndTime = new Date(
+              event.end.dateTime || event.end.date!
+            );
+            return eventEndTime > now;
+          }
+        );
 
         setEvents(upcomingEvents);
       } catch (err: any) {
@@ -45,7 +61,7 @@ export default function UpcomingMeetingsPage() {
       }
     };
 
-    fetchEvents();
+    fetchPageData();
   }, []);
 
   const handleToggleChange = async (
@@ -164,6 +180,7 @@ export default function UpcomingMeetingsPage() {
             events={dateEvents}
             onToggleChange={handleToggleChange}
             isOperating={isOperating}
+            showAccountEmail={showAccountEmail}
           />
         ))}
       </div>
