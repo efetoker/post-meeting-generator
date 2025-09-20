@@ -24,12 +24,6 @@ export function GeneratedEmail({
   isGenerating,
   setIsGenerating,
 }: GeneratedEmailProps) {
-  useEffect(() => {
-    if (transcript && !generatedEmail && !isGenerating) {
-      handleGenerateEmail();
-    }
-  }, [transcript]);
-
   const handleGenerateEmail = async () => {
     if (isGenerating) return;
 
@@ -63,6 +57,12 @@ export function GeneratedEmail({
         setIsGenerating(false);
       });
   };
+
+  useEffect(() => {
+    if (transcript && !generatedEmail && !isGenerating) {
+      handleGenerateEmail();
+    }
+  }, [transcript, generatedEmail, isGenerating, handleGenerateEmail]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedEmail);
