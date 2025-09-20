@@ -39,11 +39,11 @@ export function MeetingCard({
   return (
     <div
       className={cn(
-        "p-4 border rounded-lg flex items-center gap-4 transition-colors",
+        "p-4 border rounded-lg flex flex-col items-start gap-4 transition-colors sm:flex-row sm:items-center",
         !isRecordable && "bg-muted/50 opacity-70"
       )}
     >
-      <div className="flex flex-col items-center justify-center w-24">
+      <div className="flex flex-col sm:items-center justify-center w-full sm:w-24">
         <div className="font-semibold text-lg">{startTime.split(" ")[0]}</div>
         <div className="text-xs text-muted-foreground">
           {startTime.split(" ")[1]}
@@ -52,7 +52,7 @@ export function MeetingCard({
           <PlatformIcon platform={meetingInfo?.platform ?? null} />
         </div>
       </div>
-      <div className="flex-1 border-l pl-4">
+      <div className="flex-1 sm:border-l w-full sm:w-auto sm:pl-4">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-semibold">{event.summary || "No Title"}</h3>
           {isRecordable && <StatusBadge status={event.status as Status} />}
@@ -65,7 +65,7 @@ export function MeetingCard({
         {isRecordable && <AttendeeAvatars attendees={event.attendees} />}
       </div>
       {isRecordable ? (
-        <div className="flex items-center space-x-3 w-40 justify-end">
+        <div className="flex items-center space-x-3 sm:w-40 justify-end">
           <Label
             htmlFor={`record-${event.id}`}
             className="text-sm cursor-pointer"
