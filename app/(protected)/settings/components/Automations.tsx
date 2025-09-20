@@ -22,16 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { AutomationForm } from "./AutomationForm";
 
 interface AutomationsProps {
   automations: Automation[];
@@ -79,7 +70,7 @@ export function Automations({ automations, setAutomations }: AutomationsProps) {
         loading: "Saving automation...",
         success: (createdAutomation) => {
           setAutomations((prev) => [...prev, createdAutomation]);
-          setIsDialogOpen(false); // Close dialog on success
+          setIsDialogOpen(false);
           return "Automation created successfully!";
         },
         error: (err) => err.toString(),
@@ -109,67 +100,10 @@ export function Automations({ automations, setAutomations }: AutomationsProps) {
             <DialogHeader>
               <DialogTitle>Create New Automation</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleAddAutomation} className="space-y-4 pt-4">
-              <div>
-                <Label htmlFor="name">Automation Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="e.g., Weekly Financial Tip for LinkedIn"
-                  required
-                />
-              </div>
-              <div>
-                <Label>Type</Label>
-                <Select name="type" defaultValue="generate_post">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="generate_post">Generate post</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="platform">Platform</Label>
-                <Select name="platform" required defaultValue="LinkedIn">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                    <SelectItem value="Facebook">Facebook</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="prompt">Description (Prompt)</Label>
-                <Textarea
-                  id="prompt"
-                  name="prompt"
-                  required
-                  rows={5}
-                  placeholder="Draft a LinkedIn post based on the following key points..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="example">
-                  Example Output (Optional)
-                  <p className="text-xs font-normal text-muted-foreground">
-                    Provide an example of the tone and format you want.
-                  </p>
-                </Label>
-                <Textarea
-                  id="example"
-                  name="example"
-                  rows={5}
-                  placeholder="e.g., '💡 Did you know...? Here's a quick tip...'"
-                />
-              </div>
-              <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting ? "Saving..." : "Save Automation"}
-              </Button>
-            </form>
+            <AutomationForm
+              handleSubmit={handleAddAutomation}
+              isSubmitting={isSubmitting}
+            />
           </DialogContent>
         </Dialog>
       </CardHeader>
@@ -200,7 +134,6 @@ export function Automations({ automations, setAutomations }: AutomationsProps) {
                     </p>
                   </div>
                 </div>
-                {/* Placeholder for future actions */}
                 <Button variant="ghost" size="sm" disabled>
                   Edit
                 </Button>
