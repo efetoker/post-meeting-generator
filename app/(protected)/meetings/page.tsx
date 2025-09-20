@@ -57,6 +57,7 @@ export default function PastMeetingsPage() {
   }, []);
 
   if (isLoading) {
+    // TODO: Better loading
     return <div className="p-8">Loading past meetings...</div>;
   }
 
