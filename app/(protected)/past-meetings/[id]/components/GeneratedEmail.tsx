@@ -2,21 +2,28 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from "@iconify/react";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface GeneratedEmailProps {
   transcript: string;
+  generatedEmail: string;
+  setGeneratedEmail: (email: string) => void;
+  isGenerating: boolean;
+  setIsGenerating: (isGenerating: boolean) => void;
 }
 
-export function GeneratedEmail({ transcript }: GeneratedEmailProps) {
-  const [generatedEmail, setGeneratedEmail] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-
+export function GeneratedEmail({
+  transcript,
+  generatedEmail,
+  setGeneratedEmail,
+  isGenerating,
+  setIsGenerating,
+}: GeneratedEmailProps) {
   useEffect(() => {
     if (transcript && !generatedEmail && !isGenerating) {
       handleGenerateEmail();

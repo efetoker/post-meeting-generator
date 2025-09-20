@@ -25,6 +25,8 @@ export default function MeetingDetailPage() {
   const id = params.id as string;
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [generatedEmail, setGeneratedEmail] = useState("");
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -128,7 +130,13 @@ export default function MeetingDetailPage() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="email">
-                <GeneratedEmail transcript={cleanTranscript} />
+                <GeneratedEmail
+                  transcript={cleanTranscript}
+                  generatedEmail={generatedEmail}
+                  setGeneratedEmail={setGeneratedEmail}
+                  isGenerating={isGeneratingEmail}
+                  setIsGenerating={setIsGeneratingEmail}
+                />
               </TabsContent>
               <TabsContent value="social-post">
                 <GeneratedSocialPosts
