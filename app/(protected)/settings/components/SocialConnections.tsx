@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SocialConnectionsProps {
   connections: Account[];
@@ -123,7 +124,9 @@ export function SocialConnections({
   const handlePageSelect = (pageId: string | null) => {
     if (pageId === null) {
       savePageSelection(null, null);
+      return;
     }
+
     const selectedPage = pages.find((p) => p.id === pageId);
     if (selectedPage) {
       savePageSelection(selectedPage.id, selectedPage.access_token);
@@ -220,10 +223,9 @@ export function SocialConnections({
                   Default Page for Posts
                 </label>
                 {isLoadingPages ? (
-                  // TODO: Better loading
-                  <p className="text-sm text-muted-foreground">
-                    Loading pages...
-                  </p>
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-10 w-full" />
+                  </div>
                 ) : (
                   <div className="flex items-center space-x-4">
                     <Select
