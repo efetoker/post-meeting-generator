@@ -36,6 +36,7 @@ export default function MeetingDetailPage() {
   const id = params.id as string;
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [internalLoading, setInternalLoading] = useState(true);
   const [generatedEmail, setGeneratedEmail] = useState("");
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
   const [automations, setAutomations] = useState<Automation[]>([]);
@@ -45,6 +46,7 @@ export default function MeetingDetailPage() {
   useEffect(() => {
     if (!id) return;
     const fetchPageData = async () => {
+      setInternalLoading(true);
       try {
         try {
           await fetch(`/api/meetings/${id}/posts/draft`, {
@@ -75,6 +77,7 @@ export default function MeetingDetailPage() {
         toast.error("Failed to load page data.");
       } finally {
         setIsLoading(false);
+        setInternalLoading(false);
       }
     };
 
@@ -179,6 +182,7 @@ export default function MeetingDetailPage() {
                   generatedPosts={generatedPosts}
                   setGeneratedPosts={setGeneratedPosts}
                   setRefetchTrigger={setRefetchTrigger}
+                  isLoading={internalLoading}
                 />
               </TabsContent>
             </Tabs>

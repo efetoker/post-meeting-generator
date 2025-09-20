@@ -20,6 +20,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { SocialPostCard } from "./SocialPostCard";
 import { Icon } from "@iconify/react";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
+
+const PostCardSkeleton = () => (
+  <Card className="py-0">
+    <CardContent className="flex items-center gap-4 p-4">
+      <Skeleton className="h-5 w-5 rounded-full" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-1/4" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+      <Skeleton className="h-16 w-1/5" />
+    </CardContent>
+  </Card>
+);
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
@@ -28,6 +42,7 @@ interface GeneratedSocialPostsProps {
   generatedPosts: SocialPost[];
   setGeneratedPosts: React.Dispatch<React.SetStateAction<SocialPost[]>>;
   setRefetchTrigger: React.Dispatch<React.SetStateAction<number>>;
+  isLoading: boolean;
 }
 
 export function GeneratedSocialPosts({
@@ -37,6 +52,7 @@ export function GeneratedSocialPosts({
   generatedPosts,
   setGeneratedPosts,
   setRefetchTrigger,
+  isLoading,
 }: GeneratedSocialPostsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPosting, setIsPosting] = useState<string | null>(null);
@@ -219,16 +235,25 @@ export function GeneratedSocialPosts({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {generatedPosts.length > 0 && <Separator className="my-4" />}
+      {(generatedPosts.length > 0 || isLoading) && (
+        <Separator className="my-4" />
+      )}
       <div className="space-y-4">
-        {generatedPosts.map((post) => (
-          <SocialPostCard
-            key={post.id}
-            post={post}
-            onDelete={handleDelete}
-            isOperating={isDeleting === post.id}
-          />
-        ))}
+        {isLoading ? (
+          <>
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+          </>
+        ) : (
+          generatedPosts.map((post) => (
+            <SocialPostCard
+              key={post.id}
+              post={post}
+              onDelete={handleDelete}
+              isOperating={isDeleting === post.id}
+            />
+          ))
+        )}
       </div>
     </div>
   );
