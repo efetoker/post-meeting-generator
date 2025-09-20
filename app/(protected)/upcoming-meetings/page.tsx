@@ -11,6 +11,7 @@ import { MeetingGroup } from "./components/MeetingGroup";
 import { getMeetingInfo } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@iconify/react";
 
 export interface EnrichedCalendarEvent extends CalendarEvent {
   isRecordingEnabled: boolean;
@@ -27,6 +28,39 @@ export default function UpcomingMeetingsPage() {
   const [showAccountEmail, setShowAccountEmail] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    initFetch();
+  }, []);
+
+  const initFetch = async () => {
+    setIsLoading(true);
+    try {
+      await fetch("/api/cron/poll");
+    } catch (error) {
+      console.error("Initial poll failed, continuing without it.");
+    }
+    await fetchEvents();
+    setIsLoading(false);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    toast.loading("Refreshing meeting statuses...");
+
+    try {
+      await fetch("/api/cron/poll");
+      await fetchEvents();
+      toast.dismiss();
+      toast.success("Statuses updated!");
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to refresh.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const fetchEvents = async (pageToken: string | null = null) => {
     try {
@@ -77,16 +111,6 @@ export default function UpcomingMeetingsPage() {
       setIsFetchingMore(false);
     }
   };
-
-  useEffect(() => {
-    const initFetch = async () => {
-      try {
-        await fetch("/api/cron/poll");
-      } catch (error) {}
-      await fetchEvents();
-    };
-    initFetch();
-  }, []);
 
   const handleLoadMore = async () => {
     if (nextPageToken) {
@@ -202,11 +226,23 @@ export default function UpcomingMeetingsPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Upcoming Meetings</h1>
-        <p className="text-muted-foreground mt-2">
-          View your upcoming calendar events and manage recording settings.
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Upcoming Meetings</h1>
+          <p className="text-muted-foreground mt-2">
+            View your upcoming calendar events and manage recording settings.
+          </p>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          disabled={isRefreshing || isLoading}
+        >
+          <Icon
+            icon="lucide:refresh-cw"
+            className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
       </div>
       <div className="space-y-8">
         {Array.from(groupedEvents.entries()).map(([date, dateEvents]) => (
@@ -225,7 +261,7 @@ export default function UpcomingMeetingsPage() {
           <Button
             variant="outline"
             onClick={handleLoadMore}
-            disabled={isFetchingMore}
+            disabled={isFetchingMore || isRefreshing}
           >
             {isFetchingMore ? "Loading..." : "Load More"}
           </Button>
