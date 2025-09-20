@@ -83,13 +83,9 @@ export default function MeetingDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <Skeleton className="h-7 w-1/2" />
-              <Skeleton className="h-5 w-2/3" />
-            </CardHeader>
             <CardContent>
-              <Skeleton className="h-10 w-48 mb-4" />
-              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-12 w-48 mb-4" />
+              <Skeleton className="h-46 w-full" />
             </CardContent>
           </Card>
         </div>
