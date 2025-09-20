@@ -10,6 +10,7 @@ on:
 jobs:
   poll:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *' && env.ENABLE_GITHUB_WORKFLOWS == 'true'
     steps:
       - name: Call the polling endpoint
         run: curl --request GET --url "${{ secrets.POLLING_URL }}" --fail
