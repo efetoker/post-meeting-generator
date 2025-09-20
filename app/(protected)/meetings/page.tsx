@@ -63,7 +63,12 @@ export default function PastMeetingsPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-6">Past Meetings</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Past Meetings</h1>
+        <p className="text-muted-foreground">
+          Review transcripts and generate content from your completed meetings.
+        </p>
+      </div>
       <div className="space-y-4">
         {meetings.length > 0 ? (
           meetings.map((meeting) => (
@@ -88,14 +93,16 @@ export default function PastMeetingsPage() {
                   <div className="flex flex-wrap gap-2">
                     {meeting.attendees &&
                     (meeting.attendees as unknown as Attendee[]).length > 0 ? (
-                      (meeting.attendees as unknown as Attendee[]).map((attendee) => (
-                        <div
-                          key={attendee.email}
-                          className="text-xs bg-secondary text-secondary-foreground rounded-full px-2 py-1"
-                        >
-                          {attendee.email}
-                        </div>
-                      ))
+                      (meeting.attendees as unknown as Attendee[]).map(
+                        (attendee) => (
+                          <div
+                            key={attendee.email}
+                            className="text-xs bg-secondary text-secondary-foreground rounded-full px-2 py-1"
+                          >
+                            {attendee.email}
+                          </div>
+                        )
+                      )
                     ) : (
                       <p className="text-xs text-muted-foreground">
                         No attendees listed.

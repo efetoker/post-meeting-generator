@@ -171,7 +171,12 @@ export default function UpcomingMeetingsPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-6">Upcoming Meetings</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Upcoming Meetings</h1>
+        <p className="text-muted-foreground">
+          View your upcoming calendar events and manage recording settings.
+        </p>
+      </div>
       <div className="space-y-8">
         {Array.from(groupedEvents.entries()).map(([date, dateEvents]) => (
           <MeetingGroup
