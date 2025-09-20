@@ -1,44 +1,31 @@
 // app/page.tsx
 
-"use client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { redirect } from "next/navigation";
+import { SignInButton } from "@/app/components/AuthButtons";
 
-import { Button } from "@/components/ui/button";
-import { useSession, signIn, signOut } from "next-auth/react";
+export default async function Home() {
+  const session = await getServerSession(authOptions);
 
-export default function Home() {
-  const { data: session, status } = useSession();
-
-  if (status === "loading") {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <p>Loading...</p>
-      </main>
-    );
+  if (session) {
+    redirect("/upcoming-meetings");
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-6">
+    <main className="flex min-h-[calc(100vh-65px)] flex-col items-center justify-center p-8 text-center">
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
           Post-Meeting Content Generator
         </h1>
-        {session ? (
-          <div>
-            <p className="mb-4">
-              Welcome, <strong>{session.user?.name}</strong>!
-            </p>
-            <Button onClick={() => signOut()} variant="destructive">
-              Sign Out
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <p className="mb-4">Please sign in to continue.</p>
-            <Button onClick={() => signIn("google")}>
-              Sign in with Google
-            </Button>
-          </div>
-        )}
+        <p className="mt-4 text-lg text-muted-foreground">
+          Turn your meeting transcripts into engaging social media posts and
+          follow-up emails instantly.
+        </p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-4">
+          <p className="text-muted-foreground">Get started in seconds.</p>
+          <SignInButton />
+        </div>
       </div>
     </main>
   );

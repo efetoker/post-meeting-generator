@@ -5,6 +5,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/app/components/AuthProvider";
 import Link from "next/link";
+import { Toaster } from "react-hot-toast";
+import Navbar from "./components/NavBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,18 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <header className="border-b">
-          <nav className="container mx-auto flex items-center justify-between p-4">
-            <Link href="/" className="font-bold text-lg">
-              Post-Meeting Generator
-            </Link>
-            <div className="space-x-4">
-              <Link href="/dashboard">Dashboard</Link>
-              <Link href="/meetings">Past Meetings</Link>
-              <Link href="/settings">Settings</Link>
-            </div>
-          </nav>
-        </header>
+        <Toaster position="top-center" />
+        <Navbar />
         <main>
           <AuthProvider>{children}</AuthProvider>
         </main>

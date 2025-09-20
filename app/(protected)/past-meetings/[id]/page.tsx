@@ -1,4 +1,4 @@
-// app/meetings/[id]/page.tsx
+// app/past-meetings/[id]/page.tsx
 
 "use client";
 
@@ -41,6 +41,7 @@ export default function MeetingDetailPage() {
   }, [id]);
 
   if (isLoading) {
+    // TODO: Better loading
     return <div className="p-8">Loading meeting details...</div>;
   }
 

@@ -1,4 +1,4 @@
-// app/meetings/[id]/components/GeneratedSocialPosts.tsx
+// app/past-meetings/[id]/components/GeneratedSocialPosts.tsx
 
 "use client";
 
