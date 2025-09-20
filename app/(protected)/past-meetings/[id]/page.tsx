@@ -91,51 +91,53 @@ export default function MeetingDetailPage() {
         </p>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Full Transcript</CardTitle>
-          <CardDescription>
-            The complete, AI-generated transcript from your meeting.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-6">
-          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
-            {cleanTranscript}
-          </pre>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Full Transcript</CardTitle>
+            <CardDescription>
+              The complete, AI-generated transcript from your meeting.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-6">
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
+              {cleanTranscript}
+            </pre>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Toolkit</CardTitle>
-          <CardDescription>
-            Generate content from this meeting&#39;s transcript.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Tabs defaultValue="email">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="email">
-                <Icon icon="lucide:mail" className="size-4 mr-2" />
-                Follow-up Email
-              </TabsTrigger>
-              <TabsTrigger value="social-post">
-                <Icon icon="lucide:megaphone" className="size-4 mr-2" />
-                Social Posts
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="email">
-              <GeneratedEmail transcript={cleanTranscript} />
-            </TabsContent>
-            <TabsContent value="social-post">
-              <GeneratedSocialPosts
-                meetingId={id}
-                transcript={cleanTranscript}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Toolkit</CardTitle>
+            <CardDescription>
+              Generate content from this meeting&#39;s transcript.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Tabs defaultValue="email">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="email">
+                  <Icon icon="lucide:mail" className="size-4 mr-2" />
+                  Follow-up Email
+                </TabsTrigger>
+                <TabsTrigger value="social-post">
+                  <Icon icon="lucide:megaphone" className="size-4 mr-2" />
+                  Social Posts
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="email">
+                <GeneratedEmail transcript={cleanTranscript} />
+              </TabsContent>
+              <TabsContent value="social-post">
+                <GeneratedSocialPosts
+                  meetingId={id}
+                  transcript={cleanTranscript}
+                />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
