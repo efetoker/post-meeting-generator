@@ -96,14 +96,19 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDisconnect = async (provider: string) => {
+  const handleDisconnect = async (
+    provider: string,
+    providerAccountId: string
+  ) => {
     try {
       await fetch("/api/connections/disconnect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider }),
+        body: JSON.stringify({ provider, providerAccountId }),
       });
-      setConnections(connections.filter((c) => c.provider !== provider));
+      setConnections(
+        connections.filter((c) => c.providerAccountId !== providerAccountId)
+      );
     } catch (error) {
       console.error(`Failed to disconnect ${provider}`, error);
     }
