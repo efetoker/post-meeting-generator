@@ -20,6 +20,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Icon } from "@iconify/react";
 
+const PlatformIcon = ({ platform }: { platform: string }) => {
+  let iconName = "";
+  if (platform?.includes("Google Meet")) iconName = "logos:google-meet";
+  else if (platform?.includes("Zoom")) iconName = "logos:zoom";
+  else if (platform?.includes("Microsoft Teams"))
+    iconName = "logos:microsoft-teams";
+
+  if (!iconName) return null;
+  return <Icon icon={iconName} className="h-6 w-6" />;
+};
+
 export default function MeetingDetailPage() {
   const params = useParams();
   const id = params.id as string;
@@ -108,7 +119,10 @@ export default function MeetingDetailPage() {
   return (
     <div className="container mx-auto max-w-4xl p-4 md:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">{meeting.title}</h1>
+        <div className="flex items-center gap-4">
+          <PlatformIcon platform={meeting.platform} />
+          <h1 className="text-3xl font-bold">{meeting.title}</h1>
+        </div>
         <p className="text-muted-foreground mt-1">
           {new Date(meeting.startTime).toLocaleString()}
         </p>
