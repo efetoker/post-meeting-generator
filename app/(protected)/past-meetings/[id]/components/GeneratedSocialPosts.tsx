@@ -27,6 +27,7 @@ interface GeneratedSocialPostsProps {
   setAutomations: (automations: Automation[]) => void;
   generatedPosts: SocialPost[];
   setGeneratedPosts: React.Dispatch<React.SetStateAction<SocialPost[]>>;
+  setRefetchTrigger: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export function GeneratedSocialPosts({
@@ -35,6 +36,7 @@ export function GeneratedSocialPosts({
   automations,
   generatedPosts,
   setGeneratedPosts,
+  setRefetchTrigger,
 }: GeneratedSocialPostsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPosting, setIsPosting] = useState<string | null>(null);
@@ -125,15 +127,9 @@ export function GeneratedSocialPosts({
         throw new Error(errorData.error || "Failed to post.");
       }
 
-      setGeneratedPosts((prevPosts) =>
-        prevPosts.map((p) =>
-          p.id === post.id
-            ? { ...p, content: editableContent, status: "PUBLISHED" }
-            : p
-        )
-      );
       toast.success("Posted successfully!");
       setIsPostDialogOpen(false);
+      setRefetchTrigger((prev) => prev + 1);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -151,7 +147,7 @@ export function GeneratedSocialPosts({
     toast.promise(promise, {
       loading: "Deleting post...",
       success: () => {
-        setGeneratedPosts((prev) => prev.filter((p) => p.id !== postId));
+        setRefetchTrigger((prev) => prev + 1);
         return "Post deleted.";
       },
       error: (err) => err.toString(),
@@ -195,7 +191,9 @@ export function GeneratedSocialPosts({
             <Button
               variant="outline"
               onClick={handleCopy}
-              disabled={isGenerating || !generatedPostInDialog || isPosting !== null}
+              disabled={
+                isGenerating || !generatedPostInDialog || isPosting !== null
+              }
             >
               <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
               Copy

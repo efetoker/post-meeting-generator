@@ -29,7 +29,7 @@ export default function MeetingDetailPage() {
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [generatedPosts, setGeneratedPosts] = useState<SocialPost[]>([]);
-  const [isLoadingSocial, setIsLoadingSocial] = useState(true);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -62,7 +62,7 @@ export default function MeetingDetailPage() {
     };
 
     fetchPageData();
-  }, [id]);
+  }, [id, refetchTrigger]);
 
   if (isLoading) {
     return (
@@ -159,6 +159,7 @@ export default function MeetingDetailPage() {
                   setAutomations={setAutomations}
                   generatedPosts={generatedPosts}
                   setGeneratedPosts={setGeneratedPosts}
+                  setRefetchTrigger={setRefetchTrigger}
                 />
               </TabsContent>
             </Tabs>
