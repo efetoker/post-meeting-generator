@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/app/components/AuthProvider";
 import Link from "next/link";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <Toaster position="top-center" />
         <header className="border-b">
           <nav className="container mx-auto flex items-center justify-between p-4">
             <Link href="/" className="font-bold text-lg">
