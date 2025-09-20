@@ -63,7 +63,7 @@ export default function MeetingDetailPage() {
         <CardHeader>
           <CardTitle>AI Toolkit</CardTitle>
           <CardDescription>
-            Generate content from this meeting's transcript.
+            Generate content from this meeting&#39;s transcript.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
