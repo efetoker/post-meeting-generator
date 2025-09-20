@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { SocialPostCard } from "./SocialPostCard";
 import { Icon } from "@iconify/react";
+import { Separator } from "@/components/ui/separator";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
@@ -218,7 +219,8 @@ export function GeneratedSocialPosts({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="space-y-6 mt-4">
+      <Separator className="my-6" />
+      <div className="space-y-4">
         {generatedPosts.map((post) => (
           <SocialPostCard
             key={post.id}
