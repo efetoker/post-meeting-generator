@@ -106,7 +106,7 @@ export function SocialConnections({
   };
 
   return (
-    <Card className="mb-8">
+    <Card>
       <CardHeader>
         <CardTitle>Social Media Connections</CardTitle>
         <CardDescription>

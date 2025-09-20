@@ -157,24 +157,16 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
         <TabsContent value="connections">
-          <Card>
-            <CardHeader>
-              <CardTitle>Connections</CardTitle>
-              <CardDescription>
-                Manage your connected Google and social media accounts.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <GoogleConnections
-                connections={connections}
-                handleDisconnect={handleDisconnect}
-              />
-              <SocialConnections
-                connections={connections}
-                handleDisconnect={handleDisconnect}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <GoogleConnections
+              connections={connections}
+              handleDisconnect={handleDisconnect}
+            />
+            <SocialConnections
+              connections={connections}
+              handleDisconnect={handleDisconnect}
+            />
+          </div>
         </TabsContent>
         <TabsContent value="automations">
           <Automations
