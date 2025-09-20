@@ -109,7 +109,7 @@ export function GoogleConnections({
 
           <div className="mt-2">
             <a href="/api/auth/connect/google">
-              <Button variant="outline">
+              <Button>
                 <Icon icon="lucide:plus" className="mr-2 h-4 w-4" />
                 Connect another Google Account
               </Button>
