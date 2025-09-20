@@ -14,6 +14,7 @@ export interface EnrichedCalendarEvent extends CalendarEvent {
   isRecordingEnabled: boolean;
   sourceAccountId: string;
   sourceAccountEmail: string | null;
+  status: string;
 }
 
 export default function UpcomingMeetingsPage() {
@@ -53,7 +54,7 @@ export default function UpcomingMeetingsPage() {
             const eventEndTime = new Date(
               event.end.dateTime || event.end.date!
             );
-            return eventEndTime > now;
+            return eventEndTime > now && event.status !== "COMPLETED";
           }
         );
 

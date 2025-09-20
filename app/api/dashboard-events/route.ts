@@ -117,17 +117,22 @@ export async function GET() {
       select: {
         googleEventId: true,
         recordingEnabled: true,
+        status: true,
       },
     });
 
     const recordingStatusMap = new Map(
-      ourMeetings.map((m) => [m.googleEventId, m.recordingEnabled])
+      ourMeetings.map((m) => [m.googleEventId, m])
     );
 
-    const enrichedEvents = allEvents.map((event: any) => ({
-      ...event,
-      isRecordingEnabled: recordingStatusMap.get(event.id) || false,
-    }));
+    const enrichedEvents = allEvents.map((event: any) => {
+      const ourMeeting = recordingStatusMap.get(event.id);
+      return {
+        ...event,
+        isRecordingEnabled: ourMeeting?.recordingEnabled || false,
+        status: ourMeeting?.status || "SCHEDULED",
+      };
+    });
 
     return NextResponse.json(enrichedEvents);
   } catch (error) {
