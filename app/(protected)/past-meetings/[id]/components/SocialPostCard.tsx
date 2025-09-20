@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -89,6 +90,14 @@ export function SocialPostCard({
                 <span>{post.platform} Post</span>
               </div>
             </DialogTitle>
+            <DialogDescription>
+              Posted on{" "}
+              {new Date(post.createdAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
