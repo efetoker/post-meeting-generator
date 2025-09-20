@@ -11,6 +11,14 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum MeetingStatus {
+  SCHEDULED
+  PROCESSING
+  TRANSCRIBING
+  COMPLETED
+  FAILED
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -78,7 +86,7 @@ model Meeting {
   attendees        Json?
   recordingEnabled Boolean @default(false)
 
-  status          String @default("SCHEDULED") // e.g., SCHEDULED, PROCESSING, COMPLETED, FAILED
+  status          MeetingStatus @default(SCHEDULED) // e.g., SCHEDULED, TRANSCRIBING, COMPLETED, FAILED
 
   recallBotId     String?
   transcript      String? @db.Text
@@ -108,6 +116,7 @@ model SocialPost {
   platform  String // e.g., "LinkedIn", "Facebook"
   content   String @db.Text
   status    String @default("DRAFT") // DRAFT or PUBLISHED
+  publicUrl String?
 
   meetingId String
   meeting   Meeting @relation(fields: [meetingId], references: [id])

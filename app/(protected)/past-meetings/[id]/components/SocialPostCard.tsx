@@ -1,0 +1,251 @@
+// app/past-meetings/[id]/components/SocialPostCard.tsx
+
+"use client";
+
+import { useState } from "react";
+import { SocialPost } from "@prisma/client";
+import { Icon } from "@iconify/react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+interface SocialPostCardProps {
+  post: SocialPost;
+  onDelete: (postId: string) => void;
+  isOperating: boolean;
+}
+
+const PlatformIcon = ({ platform }: { platform: string }) => {
+  let iconName = "";
+  if (platform.toLowerCase() === "linkedin") iconName = "logos:linkedin-icon";
+  else if (platform.toLowerCase() === "facebook") iconName = "logos:facebook";
+  if (!iconName) return null;
+  return <Icon icon={iconName} className="h-5 w-5" />;
+};
+
+export function SocialPostCard({
+  post,
+  onDelete,
+  isOperating,
+}: SocialPostCardProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(post.content);
+    toast.success("Post copied to clipboard!");
+  };
+
+  const handleDeleteAndClose = () => {
+    onDelete(post.id);
+    setIsDialogOpen(false);
+  };
+
+  const formattedDate = new Date(post.createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return (
+    <TooltipProvider>
+      <Card
+        className="group relative cursor-pointer transition-colors hover:bg-muted/30 py-0"
+        onClick={() => setIsDialogOpen(true)}
+      >
+        <CardContent className="flex items-center gap-4 p-4">
+          <PlatformIcon platform={post.platform} />
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">
+                {post.platform} Post
+              </span>
+              {post.status === "PUBLISHED" && (
+                <Icon
+                  icon="lucide:check-circle"
+                  className="h-4 w-4 text-green-500"
+                />
+              )}
+            </div>
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+              {post.content}
+            </p>
+          </div>
+          <div className="relative flex items-center justify-end w-24 text-right">
+            <span className="shrink-0 text-sm text-muted-foreground transition-opacity group-hover:opacity-0">
+              {formattedDate}
+            </span>
+
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {post.publicUrl && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={post.publicUrl}
+                      target="_blank"
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "icon" })
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Icon icon="lucide:external-link" className="h-4 w-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View Live Post</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <AlertDialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isOperating}
+                      >
+                        <Icon
+                          icon="lucide:trash-2"
+                          className="h-4 w-4 text-destructive"
+                        />
+                      </Button>
+                    </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete</p>
+                  </TooltipContent>
+                </Tooltip>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete this post from your
+                      database and cannot be undone. Please remember to delete
+                      the post from the published platform (e.g., LinkedIn or
+                      Facebook) yourself, as this action will only remove it
+                      from the database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAndClose}
+                      disabled={isOperating}
+                      className={cn(buttonVariants({ variant: "destructive" }))}
+                    >
+                      Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              <div className="flex items-center gap-2">
+                <PlatformIcon platform={post.platform} />
+                <span>{post.platform} Post</span>
+              </div>
+            </DialogTitle>
+            <DialogDescription>
+              Posted on{" "}
+              {new Date(post.createdAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
+              {post.content}
+            </pre>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between sm:space-x-0">
+            <div className="flex justify-start gap-2">
+              <Button variant="outline" onClick={handleCopy}>
+                <Icon icon="lucide:copy" className="mr-2 h-4 w-4" />
+                Copy
+              </Button>
+              {post.publicUrl && (
+                <Button asChild>
+                  <Link href={post.publicUrl} target="_blank">
+                    <Icon
+                      icon="lucide:external-link"
+                      className="mr-2 h-4 w-4"
+                    />
+                    View Post
+                  </Link>
+                </Button>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full sm:w-auto">
+                    Remove from Database
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete this post from your
+                      database and cannot be undone. Please remember to delete
+                      the post from the published platform (e.g., LinkedIn or
+                      Facebook) yourself, as this action will only remove it
+                      from the database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAndClose}
+                      disabled={isOperating}
+                      className={cn(buttonVariants({ variant: "destructive" }))}
+                    >
+                      Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
+  );
+}

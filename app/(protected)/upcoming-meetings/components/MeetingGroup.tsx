@@ -1,0 +1,37 @@
+// app/(protected)/upcoming-meetings/components/MeetingGroup.tsx
+
+import { EnrichedCalendarEvent } from "../page";
+import { MeetingCard } from "./MeetingCard";
+
+export function MeetingGroup({
+  date,
+  events,
+  onToggleChange,
+  isOperating,
+  showAccountEmail,
+}: {
+  date: string;
+  events: EnrichedCalendarEvent[];
+  onToggleChange: (event: EnrichedCalendarEvent, isChecked: boolean) => void;
+  isOperating: boolean;
+  showAccountEmail: boolean;
+}) {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-muted-foreground mb-3">
+        {date}
+      </h2>
+      <div className="space-y-3">
+        {events.map((event) => (
+          <MeetingCard
+            key={event.id}
+            event={event}
+            onToggleChange={onToggleChange}
+            isOperating={isOperating}
+            showAccountEmail={showAccountEmail}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

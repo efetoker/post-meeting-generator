@@ -11,17 +11,15 @@ interface BotConfigurationProps {
   offset: string;
   setOffset: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
-  message: string;
 }
 
 export function BotConfiguration({
   offset,
   setOffset,
   handleSubmit,
-  message,
 }: BotConfigurationProps) {
   return (
-    <Card className="mb-8">
+    <Card>
       <CardHeader>
         <CardTitle>Bot Configuration</CardTitle>
       </CardHeader>
@@ -40,7 +38,6 @@ export function BotConfiguration({
             />
           </div>
           <Button type="submit">Save Settings</Button>
-          {message && <p className="text-sm text-gray-600 pt-2">{message}</p>}
         </form>
       </CardContent>
     </Card>
