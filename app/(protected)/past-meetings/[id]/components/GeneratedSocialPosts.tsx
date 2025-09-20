@@ -219,7 +219,7 @@ export function GeneratedSocialPosts({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Separator className="my-4" />
+      {generatedPosts.length > 0 && <Separator className="my-4" />}
       <div className="space-y-4">
         {generatedPosts.map((post) => (
           <SocialPostCard
