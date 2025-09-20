@@ -48,7 +48,7 @@ export function PostGeneratorForm({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild className="mt-4">
+      <DialogTrigger asChild className="mt-2">
         <Card className="cursor-pointer transition-colors hover:bg-muted/30">
           <CardContent className="flex items-center justify-center px-6 gap-2">
             <Icon icon="lucide:plus" className="size-4" />
