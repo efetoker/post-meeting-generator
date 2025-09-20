@@ -17,6 +17,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import toast from "react-hot-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const [offset, setOffset] = useState("");
@@ -97,8 +98,26 @@ export default function SettingsPage() {
   };
 
   if (isLoading) {
-    // TODO: Better loading state
-    return <div className="p-8">Loading settings...</div>;
+    return (
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="mb-6">
+          <Skeleton className="h-10 w-3/4 mb-2" />
+          <Skeleton className="h-6 w-1/3" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-full" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-7 w-1/2" />
+              <Skeleton className="h-5 w-2/3" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-48 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
