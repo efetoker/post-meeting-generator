@@ -21,7 +21,7 @@ export async function GET() {
       where: {
         recordingEnabled: true,
         recallBotId: { not: null },
-        status: { in: ["SCHEDULED", "TRANSCRIBING"] },
+        status: { in: ["SCHEDULED", "PROCESSING", "TRANSCRIBING"] },
       },
     });
 
@@ -52,11 +52,31 @@ export async function GET() {
 
       const botData = await botStatusResponse.json();
 
+      if (meeting.status === "SCHEDULED") {
+        const hasCallEnded = botData.status_changes?.some(
+          (change: any) => change.code === "call_ended"
+        );
+
+        if (hasCallEnded) {
+          console.log(
+            `Call ended for bot: ${botData.id}. Updating status to PROCESSING.`
+          );
+          await prisma.meeting.update({
+            where: { id: meeting.id },
+            data: { status: "PROCESSING" },
+          });
+          continue;
+        }
+      }
+
       const recording = botData.recordings?.find(
         (r: any) => r.status?.code === "done"
       );
 
-      if (meeting.status === "SCHEDULED" && recording) {
+      if (
+        (meeting.status === "PROCESSING" || meeting.status === "SCHEDULED") &&
+        recording
+      ) {
         console.log(
           `Recording found for bot ${botData.id}. Starting transcription job.`
         );
