@@ -19,6 +19,19 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 interface GeneratedSocialPostsProps {
   meetingId: string;
@@ -225,8 +238,7 @@ export function GeneratedSocialPosts({
                 }
                 className="inline-block size-6 mr-2"
               />
-              {post.status === "DRAFT" ? "Draft" : "Published"} {post.platform}{" "}
-              Post
+              {post.platform} Post
             </h2>
             <Card>
               <CardContent className="px-6">
@@ -234,32 +246,38 @@ export function GeneratedSocialPosts({
                   {post.content}
                 </pre>
               </CardContent>
-              <CardFooter className="flex justify-between items-center">
+              <CardFooter className="flex justify-end items-center">
                 <div className="flex gap-2">
-                  {post.status === "DRAFT" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(post.id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => handleCopy}>
-                    Copy
-                  </Button>
-                  {post.status === "DRAFT" && (
-                    <Button
-                      onClick={() => handlePost(post)}
-                      disabled={isPosting === post.id}
-                    >
-                      {isPosting === post.id
-                        ? "Posting..."
-                        : `Post to ${post.platform}`}
-                    </Button>
-                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        Remove from Database
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will permanently delete this post from
+                          your database and cannot be undone. Please remember to
+                          delete the post from the published platform (e.g.,
+                          LinkedIn or Facebook) yourself, as this action will
+                          only remove it from the database.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(post.id)}
+                          className={cn(
+                            buttonVariants({ variant: "destructive" })
+                          )}
+                        >
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardFooter>
             </Card>
