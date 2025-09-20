@@ -26,6 +26,10 @@ export default function UpcomingMeetingsPage() {
   useEffect(() => {
     const fetchPageData = async () => {
       try {
+        try {
+          await fetch("/api/cron/poll");
+        } catch (error) {}
+
         const [eventsRes, connectionsRes] = await Promise.all([
           fetch("/api/dashboard-events"),
           fetch("/api/connections"),
