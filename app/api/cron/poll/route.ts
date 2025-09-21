@@ -69,19 +69,30 @@ export async function GET() {
         }
       }
 
-      if (
-        meeting.status === "PROCESSING" &&
-        botData.status?.code === "done" &&
-        (!botData.recordings || botData.recordings.length === 0)
-      ) {
-        console.error(
-          `Bot ${botData.id} for meeting ${meeting.id} finished without creating a recording. Marking as FAILED.`
+      try {
+        const hasCallEnded = botData.status_changes?.some(
+          (change: any) => change.code === "call_ended"
         );
-        await prisma.meeting.update({
-          where: { id: meeting.id },
-          data: { status: "FAILED" },
-        });
-        continue;
+
+        if (
+          meeting.status === "PROCESSING" &&
+          hasCallEnded &&
+          (!botData.recordings || botData.recordings.length === 0)
+        ) {
+          console.error(
+            `Bot ${botData.id} for meeting ${meeting.id} finished without creating a recording. Marking as FAILED.`
+          );
+          await prisma.meeting.update({
+            where: { id: meeting.id },
+            data: { status: "FAILED" },
+          });
+          continue;
+        }
+      } catch (error) {
+        console.error(
+          "Error checking for call ended without recordings:",
+          error
+        );
       }
 
       const recording = botData.recordings?.find(
