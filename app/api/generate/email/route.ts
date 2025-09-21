@@ -6,8 +6,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: Request) {
-  console.log("GEMINI_API_KEY on Vercel:", process.env.GEMINI_API_KEY);
-
   try {
     const { transcript } = await request.json();
     if (!transcript) {
