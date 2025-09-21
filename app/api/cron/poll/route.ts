@@ -69,6 +69,21 @@ export async function GET() {
         }
       }
 
+      if (
+        meeting.status === "PROCESSING" &&
+        botData.status?.code === "done" &&
+        (!botData.recordings || botData.recordings.length === 0)
+      ) {
+        console.error(
+          `Bot ${botData.id} for meeting ${meeting.id} finished without creating a recording. Marking as FAILED.`
+        );
+        await prisma.meeting.update({
+          where: { id: meeting.id },
+          data: { status: "FAILED" },
+        });
+        continue;
+      }
+
       const recording = botData.recordings?.find(
         (r: any) => r.status?.code === "done"
       );
